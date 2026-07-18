@@ -7,14 +7,18 @@ import Slider from "@react-native-community/slider";
 const TOP_INSET = Platform.OS === "ios" ? 54 : 24;
 
 export default function TimeSlider({
-  timeline, index, live, label, onScrub, onLive,
+  timeline, index, live, label, playing, stepHours, onScrub, onLive, onTogglePlay, onCycleStep,
 }: {
   timeline: number[];
   index: number;
   live: boolean;
   label: string;
+  playing: boolean;
+  stepHours: number;
   onScrub: (index: number) => void;
   onLive: () => void;
+  onTogglePlay: () => void;
+  onCycleStep: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
@@ -65,9 +69,31 @@ export default function TimeSlider({
       >
         <View style={styles.header}>
           <Text style={styles.label}>{live ? "Live" : label}</Text>
-          <Pressable style={[styles.live, live && styles.liveOn]} onPress={onLive}>
-            <Text style={[styles.liveText, live && styles.liveTextOn]}>⚡ Live</Text>
-          </Pressable>
+          <View style={styles.actions}>
+            {!live && (
+              <>
+                <Pressable
+                  style={styles.speed}
+                  onPress={onCycleStep}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Playback step ${stepHours} hours, tap to change`}
+                >
+                  <Text style={styles.speedText}>{stepHours}h</Text>
+                </Pressable>
+                <Pressable
+                  style={styles.play}
+                  onPress={onTogglePlay}
+                  accessibilityRole="button"
+                  accessibilityLabel={playing ? "Pause playback" : "Play history"}
+                >
+                  <Text style={styles.playText}>{playing ? "⏸ Pause" : "▶ Play"}</Text>
+                </Pressable>
+              </>
+            )}
+            <Pressable style={[styles.live, live && styles.liveOn]} onPress={onLive}>
+              <Text style={[styles.liveText, live && styles.liveTextOn]}>⚡ Live</Text>
+            </Pressable>
+          </View>
         </View>
         <Slider
           minimumValue={0}
@@ -103,6 +129,11 @@ const styles = StyleSheet.create({
   },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
   label: { fontSize: 15, fontWeight: "600" },
+  actions: { flexDirection: "row", alignItems: "center", gap: 8 },
+  speed: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: "#eee", minWidth: 34, alignItems: "center" },
+  speedText: { fontSize: 13, fontWeight: "700", color: "#333", fontVariant: ["tabular-nums"] },
+  play: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: "#eaf3ff" },
+  playText: { fontSize: 13, fontWeight: "700", color: "#007aff" },
   live: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: "#eee" },
   liveOn: { backgroundColor: "#007aff" },
   liveText: { fontSize: 13, fontWeight: "600", color: "#333" },

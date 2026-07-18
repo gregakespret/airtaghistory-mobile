@@ -21,7 +21,16 @@ function regionForTags(tags: Tag[]): Region | undefined {
   };
 }
 
-type Pin = { id: string; name: string; lat: number; lon: number; ago: string; location_name: string | null };
+type Pin = { id: string; name: string; lat: number; lon: number; ago: string; location_name: string | null; color: string };
+
+// How long each historical snapshot is shown during playback.
+const PLAY_INTERVAL_MS = 600;
+
+const FRESH_COLORS: Record<string, string> = {
+  fresh: "#34c759",
+  stale: "#ff9500",
+  old: "#ff3b30",
+};
 
 export default function MapScreen() {
   const { signOut } = useAuth();
@@ -30,6 +39,8 @@ export default function MapScreen() {
   const [loading, setLoading] = useState(true);
   const [live, setLive] = useState(true);
   const [index, setIndex] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [stepHours, setStepHours] = useState(1); // history advanced per playback tick: 1h / 4h / 24h
   const mapRef = useRef<MapView>(null);
 
   const focusTag = (t: Tag) => {
@@ -55,6 +66,32 @@ export default function MapScreen() {
     load();
   }, [load]);
 
+  const timeline = buildTimeline(snapshots);
+
+  // While playing, advance the cursor by `stepHours` of history each tick,
+  // snapping to the first snapshot at/after the target time (always progressing).
+  useEffect(() => {
+    if (!playing || timeline.length < 2) return;
+    const stepMs = stepHours * 3600 * 1000;
+    const id = setInterval(() => {
+      setIndex((i) => {
+        const targetMs = timeline[i] + stepMs;
+        let j = i + 1;
+        while (j < timeline.length && timeline[j] < targetMs) j++;
+        return Math.min(j, timeline.length - 1);
+      });
+    }, PLAY_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [playing, timeline.length, stepHours]);
+
+  // Reaching "now" ends playback and returns the map to Live.
+  useEffect(() => {
+    if (playing && timeline.length > 0 && index >= timeline.length - 1) {
+      setPlaying(false);
+      setLive(true);
+    }
+  }, [playing, index, timeline.length]);
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -63,9 +100,14 @@ export default function MapScreen() {
     );
   }
 
-  const timeline = buildTimeline(snapshots);
   const selectedMs = timeline.length ? timeline[Math.min(index, timeline.length - 1)] : Date.now();
   const effectiveMs = live ? (timeline[timeline.length - 1] ?? Date.now()) : selectedMs;
+
+  // A tag keeps its freshness color in both live and historical views.
+  const colorForTag = (id: string) => {
+    const t = tags.find((x) => x.tag_identifier === id);
+    return (t && FRESH_COLORS[t.freshness]) || "#007aff";
+  };
 
   const historical = positionsAt(snapshots, effectiveMs);
   const pins: Pin[] = live
@@ -76,6 +118,7 @@ export default function MapScreen() {
         lon: t.longitude,
         ago: t.ago,
         location_name: t.location_name,
+        color: FRESH_COLORS[t.freshness] ?? "#007aff",
       }))
     : Array.from(historical.values()).map((s) => ({
         id: s.tag_identifier,
@@ -84,6 +127,7 @@ export default function MapScreen() {
         lon: s.longitude,
         ago: s.ago,
         location_name: null,
+        color: colorForTag(s.tag_identifier),
       }));
 
   const eff = new Date(effectiveMs);
@@ -111,7 +155,17 @@ export default function MapScreen() {
             );
           })}
         {pins.map((p) => (
-          <Marker key={p.id} coordinate={{ latitude: p.lat, longitude: p.lon }} title={p.name}>
+          <Marker
+            key={p.id}
+            coordinate={{ latitude: p.lat, longitude: p.lon }}
+            anchor={{ x: 0.5, y: 1 }}
+          >
+            <View style={styles.marker}>
+              <View style={styles.markerLabel}>
+                <Text style={styles.markerLabelText} numberOfLines={1}>{p.name}</Text>
+              </View>
+              <View style={[styles.markerDot, { backgroundColor: p.color }]} />
+            </View>
             <Callout>
               <View style={{ maxWidth: 220 }}>
                 <Text style={{ fontWeight: "600" }}>{p.name}</Text>
@@ -127,11 +181,19 @@ export default function MapScreen() {
         index={index}
         live={live}
         label={label}
+        playing={playing}
+        stepHours={stepHours}
+        onCycleStep={() => setStepHours((h) => (h === 1 ? 4 : h === 4 ? 24 : 1))}
         onScrub={(i) => {
           setLive(false);
+          setPlaying(false); // manual scrub interrupts playback
           setIndex(i);
         }}
-        onLive={() => setLive(true)}
+        onLive={() => {
+          setLive(true);
+          setPlaying(false);
+        }}
+        onTogglePlay={() => setPlaying((p) => !p)}
       />
       <TagSheet tags={tags} onSelect={focusTag} />
     </View>
@@ -141,4 +203,15 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  marker: { alignItems: "center" },
+  markerLabel: {
+    backgroundColor: "rgba(255,255,255,0.96)", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3,
+    marginBottom: 4, borderWidth: StyleSheet.hairlineWidth, borderColor: "rgba(0,0,0,0.1)",
+    shadowColor: "#000", shadowOpacity: 0.18, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 2,
+  },
+  markerLabelText: { fontSize: 12, fontWeight: "600", color: "#1a1a1a", maxWidth: 140 },
+  markerDot: {
+    width: 15, height: 15, borderRadius: 8, borderWidth: 2.5, borderColor: "#fff",
+    shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 3,
+  },
 });
