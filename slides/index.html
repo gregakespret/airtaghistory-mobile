@@ -124,7 +124,12 @@ em{font-style:normal;color:var(--route);font-weight:600}
   display:flex;flex-direction:column;
 }
 .phone .notch{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:30%;height:22px;background:#0c1116;border-radius:0 0 14px 14px;z-index:6}
-.phone img.shot{position:absolute;inset:12px;width:calc(100% - 24px);height:calc(100% - 24px);object-fit:cover;border-radius:33px;z-index:7}
+.phone img.shot,.phone video.shot{position:absolute;inset:12px;width:calc(100% - 24px);height:calc(100% - 24px);object-fit:cover;border-radius:33px;z-index:7}
+.live-badge{position:absolute;top:22px;right:-14px;z-index:8;font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--route);padding:5px 11px;border-radius:20px;box-shadow:var(--shadow-md)}
+.live-badge::first-letter{color:#5EEAB4}
+
+/* full device screenshot that already includes its own bezel */
+.device-shot{display:block;width:auto;height:auto;max-height:76vh;max-width:100%;object-fit:contain;filter:drop-shadow(0 30px 60px rgba(15,27,38,.24))}
 
 /* browser frame */
 .browser{
@@ -341,7 +346,7 @@ em{font-style:normal;color:var(--route);font-weight:600}
 
 <!-- persistent brand chrome -->
 <div class="brandbar">
-  <div class="brand"><svg viewBox="0 0 24 24" fill="none" class="mark"><path d="M12 2C7.6 2 4 5.6 4 10c0 5.5 8 12 8 12s8-6.5 8-12c0-4.4-3.6-8-8-8Z" fill="currentColor"/><circle cx="12" cy="10" r="3" fill="#fff"/></svg>AirTag History</div>
+  <div class="brand"><svg viewBox="0 0 24 24" fill="none" class="mark"><path d="M12 2C7.6 2 4 5.6 4 10c0 5.5 8 12 8 12s8-6.5 8-12c0-4.4-3.6-8-8-8Z" fill="currentColor"/><circle cx="12" cy="10" r="3" fill="#fff"/></svg><a href="AirTagHistory.com">AirTagHistory.com</a></div>
   <div class="site">airtaghistory.com</div>
 </div>
 <div class="progress" id="progress"></div>
@@ -505,30 +510,12 @@ em{font-style:normal;color:var(--route);font-weight:600}
         <h2 class="title-lg">Then my car and my keys<br><span class="hi-amber">got separated in Panama.</span> 🇵🇦</h2>
         <p class="lede">Two AirTags that left together, drifting apart on a map at 2 a.m. A single Find My pin can't tell you that story. <em>A timeline can.</em></p>
         <div class="callback" style="margin-top:6px">
-          <div class="q"><span class="flag">🔑</span>“Keys: still in Panama City.”<br><span class="flag">📍</span>“Car: already 400 km up the coast.”</div>
-          <div class="a">— the exact moment history earned its keep</div>
+          <div class="q"><span class="flag">📍</span>“Car: stayed in Panama.”<br><span class="flag">🔑</span>“Keys: continued the travel.”</div>
+          <div class="a">— a real scrub through my own timeline</div>
         </div>
       </div>
       <div class="pinstack">
-        <div class="bigmap">
-          <div class="map">
-            <div class="grid"></div>
-            <div class="water-body" style="left:-12%;top:-12%;width:50%;height:46%"></div>
-            <div class="water-body" style="right:-14%;bottom:-10%;width:48%;height:44%"></div>
-            <div class="land" style="left:18%;top:20%;width:70%;height:64%"></div>
-            <div class="road" style="left:24%;top:70%;width:56%;transform:rotate(-30deg)"></div>
-            <svg class="trail" viewBox="0 0 400 300" preserveAspectRatio="none">
-              <path class="route" d="M120 230 C 160 220, 180 200, 210 190"/>
-              <path class="route" d="M210 190 C 250 150, 300 120, 340 70" style="stroke:#E8A13D"/>
-              <circle class="stop" cx="120" cy="230" r="5.5"/>
-              <circle class="stop" cx="210" cy="190" r="6" style="stroke:#B4540A"/>
-            </svg>
-            <div class="pin amber" style="left:30%;top:77%"><div class="head"><span>🔑</span></div><div class="tag">Keys · Panama City</div></div>
-            <div class="pin" style="left:85%;top:23%"><div class="head"><span>📍</span></div><div class="tag">Car · +400 km</div></div>
-            <div class="callout" style="left:52%;top:60%;width:130px"><div class="c-name">↔ Separated here</div><div class="c-meta">08 Nov · 03:12 local</div></div>
-          </div>
-          <div class="swap">↔ swap for real screenshot → assets/panama-split.png</div>
-        </div>
+        <img class="device-shot" src="assets/airtaghistory.com-ios-app.png" alt="AirTag History iOS app: the car and keys tags separated across the Americas, one pin down near Panama and one up by the US coast" />
       </div>
     </div>
   </section>
@@ -584,35 +571,9 @@ em{font-style:normal;color:var(--route);font-weight:600}
         <div class="phone">
           <div class="notch"></div>
           <div class="screen">
-            <div class="map">
-              <div class="grid"></div>
-              <div class="water-body" style="left:-16%;bottom:-8%;width:52%;height:38%"></div>
-              <div class="road" style="left:10%;top:50%;width:78%;transform:rotate(-9deg)"></div>
-              <svg class="trail" viewBox="0 0 300 500" preserveAspectRatio="none">
-                <path class="ghost" d="M60 120 C 120 160, 90 240, 170 280"/>
-                <path class="route" d="M170 280 C 230 310, 200 380, 120 410"/>
-                <circle class="stop" cx="60" cy="120" r="5"/>
-                <circle class="stop" cx="170" cy="280" r="6" style="stroke-width:3"/>
-              </svg>
-              <div class="pin" style="left:57%;top:56%"><div class="head"><span>📍</span></div><div class="tag">Car · 14:03</div></div>
-            </div>
-            <div class="p-status"><span>9:41</span><span>time travel</span></div>
-            <div class="p-header"><div class="h-title">Car</div><div class="h-chip">Jun 24</div></div>
-            <div class="slider-card">
-              <div class="sc-top">
-                <div class="sc-time">Jun 24 · 14:03<small>Storage yard · Long Beach</small></div>
-                <div class="live-btn past"><span class="b"></span>Live</div>
-              </div>
-              <div class="track">
-                <div class="fill" style="width:64%"></div>
-                <div class="tick" style="left:12%"></div><div class="tick" style="left:33%"></div>
-                <div class="tick" style="left:52%"></div><div class="tick" style="left:78%"></div>
-                <div class="knob" style="left:64%"></div>
-              </div>
-              <div class="scale"><span>Jun 22</span><span>Jun 24</span><span>Jun 27</span><span>now</span></div>
-            </div>
+            <video class="shot" src="assets/ios-app-demo.mp4" autoplay loop muted playsinline></video>
           </div>
-          <div class="swap">↔ swap → assets/app-timetravel.png</div>
+          <div class="live-badge">● live recording</div>
         </div>
       </div>
       <div class="stack" style="order:2">
@@ -627,43 +588,22 @@ em{font-style:normal;color:var(--route);font-weight:600}
     </div>
   </section>
 
-  <!-- ========== 8 · FRESHNESS AT A GLANCE ========== -->
+  <!-- ========== 8 · THE WEB APP ========== -->
   <section class="slide">
-    <div class="split text-left" style="height:100%">
+    <div class="split" style="grid-template-columns:.82fr 1.18fr;height:100%">
       <div class="stack">
-        <div class="eyebrow">The tag sheet</div>
-        <h2 class="title-lg">“How long has it<br>been <span class="hi">there?”</span></h2>
-        <p class="lede">The question Find My never answers. The bottom sheet lists every tag with a <em>freshness dot</em> and its dwell time — green is fresh, amber is going stale, grey has gone quiet. One glance, no map-squinting.</p>
-        <div class="stats" style="margin-top:8px">
-          <div class="stat"><div class="n" style="color:var(--green)">●</div><div class="l">fresh · seen &lt; 1h</div></div>
-          <div class="stat"><div class="n" style="color:var(--amber)">●</div><div class="l">stale · hours</div></div>
-          <div class="stat"><div class="n" style="color:var(--faint)">●</div><div class="l">quiet · no signal</div></div>
-        </div>
+        <div class="eyebrow">Same engine · on the web</div>
+        <h2 class="title-lg">Not just your phone —<br>the whole <span class="hi">web app.</span></h2>
+        <p class="lede">The identical history engine runs at <em>airtaghistory.com</em>: a full-screen map, your tag list with named places, and the <em>same time-travel slider</em> — drag left to go back through nine days of movement.</p>
+        <ul class="rlist" style="margin-top:4px">
+          <li><div class="b"></div><p><b>One account, every surface.</b> <span>The phone and the web read the same live data.</span></p></li>
+          <li class="amber"><div class="b"></div><p><b>Reverse-geocoded places.</b> <span>“Nueva Primavera, Cristóbal” — not raw coordinates.</span></p></li>
+        </ul>
       </div>
       <div class="pinstack">
-        <div class="phone">
-          <div class="notch"></div>
-          <div class="screen">
-            <div class="map">
-              <div class="grid"></div>
-              <div class="water-body" style="right:-14%;top:0;width:44%;height:34%"></div>
-              <div class="road" style="left:8%;top:30%;width:80%;transform:rotate(-6deg)"></div>
-            </div>
-            <div class="p-status"><span>9:41</span><span>●●● 5G</span></div>
-            <div class="p-header"><div class="h-title">Your tags</div><div class="h-chip"><span class="live-dot"></span>Live</div></div>
-            <div class="sheet" style="bottom:0;top:32%">
-              <div class="grab"></div>
-              <div class="s-head"><b>5 tags</b><span>sorted by freshness</span></div>
-              <div class="taglist">
-                <div class="tagrow"><span class="dot g"></span><div class="t-main"><div class="t-name">Car</div><div class="t-loc">Ljubljana, Center</div></div><div class="t-dwell">here for<b>2 days</b></div></div>
-                <div class="tagrow"><span class="dot g"></span><div class="t-main"><div class="t-name">Backpack</div><div class="t-loc">Home</div></div><div class="t-dwell">seen<b>12m ago</b></div></div>
-                <div class="tagrow"><span class="dot a"></span><div class="t-main"><div class="t-name">Keys</div><div class="t-loc">Panama City, PA</div></div><div class="t-dwell">here for<b>2 days</b></div></div>
-                <div class="tagrow"><span class="dot a"></span><div class="t-main"><div class="t-name">Suitcase</div><div class="t-loc">Frankfurt Airport</div></div><div class="t-dwell">seen<b>5h ago</b></div></div>
-                <div class="tagrow"><span class="dot x"></span><div class="t-main"><div class="t-name">Bike</div><div class="t-loc">No signal · overnight</div></div><div class="t-dwell">last seen<b>1d ago</b></div></div>
-              </div>
-            </div>
-          </div>
-          <div class="swap">↔ swap → assets/app-tagsheet.png</div>
+        <div class="browser" style="max-width:none;width:100%">
+          <div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="url"><svg viewBox="0 0 24 24" fill="none"><path d="M6 10V7a6 6 0 1112 0v3" stroke="currentColor" stroke-width="2"/><rect x="4" y="10" width="16" height="10" rx="2" fill="currentColor"/></svg>airtaghistory.com</div></div>
+          <div class="viewport"><img class="shot" src="assets/airtaghistory.com-web.png" alt="AirTag History web dashboard: full-screen map of the Americas with the tag list and time-travel slider, showing the car near Panama and the keys near the US coast" /></div>
         </div>
       </div>
     </div>
