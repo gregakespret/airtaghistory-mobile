@@ -8,7 +8,8 @@
     "scheme": "airtaghistory",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.gregakespret.airtaghistory"
     },
     "android": {
       "adaptiveIcon": {
