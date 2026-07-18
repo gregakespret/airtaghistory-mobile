@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-import MapView, { Marker, Callout, Region } from "react-native-maps";
-import { api, Tag, ApiError } from "../api";
+import MapView, { Marker, Callout, Polyline, Region } from "react-native-maps";
+import { api, Tag, Snapshot, ApiError } from "../api";
 import { useAuth } from "../auth";
 import TagSheet from "../components/TagSheet";
+import TimeSlider from "../components/TimeSlider";
+import { buildTimeline, positionsAt, trailFor } from "../timetravel";
 
 function regionForTags(tags: Tag[]): Region | undefined {
   if (tags.length === 0) return undefined;
@@ -19,10 +21,15 @@ function regionForTags(tags: Tag[]): Region | undefined {
   };
 }
 
+type Pin = { id: string; name: string; lat: number; lon: number; ago: string; location_name: string | null };
+
 export default function MapScreen() {
   const { signOut } = useAuth();
   const [tags, setTags] = useState<Tag[]>([]);
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [live, setLive] = useState(true);
+  const [index, setIndex] = useState(0);
   const mapRef = useRef<MapView>(null);
 
   const focusTag = (t: Tag) => {
@@ -34,7 +41,9 @@ export default function MapScreen() {
 
   const load = useCallback(async () => {
     try {
-      setTags(await api.getTags());
+      const [t, s] = await Promise.all([api.getTags(), api.getSnapshots()]);
+      setTags(t);
+      setSnapshots(s);
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) signOut();
     } finally {
@@ -54,25 +63,70 @@ export default function MapScreen() {
     );
   }
 
+  const timeline = buildTimeline(snapshots);
+  const selectedMs = timeline.length ? timeline[Math.min(index, timeline.length - 1)] : Date.now();
+  const effectiveMs = live ? (timeline[timeline.length - 1] ?? Date.now()) : selectedMs;
+
+  const historical = positionsAt(snapshots, effectiveMs);
+  const pins: Pin[] = live
+    ? tags.map((t) => ({
+        id: t.tag_identifier,
+        name: t.tag_name,
+        lat: t.latitude,
+        lon: t.longitude,
+        ago: t.ago,
+        location_name: t.location_name,
+      }))
+    : Array.from(historical.values()).map((s) => ({
+        id: s.tag_identifier,
+        name: s.tag_name,
+        lat: s.latitude,
+        lon: s.longitude,
+        ago: s.ago,
+        location_name: null,
+      }));
+
+  const label = new Date(effectiveMs).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" });
+
   return (
     <View style={styles.container}>
       <MapView ref={mapRef} style={StyleSheet.absoluteFill} initialRegion={regionForTags(tags)}>
-        {tags.map((t) => (
-          <Marker
-            key={t.tag_identifier}
-            coordinate={{ latitude: t.latitude, longitude: t.longitude }}
-            title={t.tag_name}
-          >
+        {!live &&
+          tags.map((t) => {
+            const trail = trailFor(snapshots, t.tag_identifier, effectiveMs, 20);
+            if (trail.length < 2) return null;
+            return (
+              <Polyline
+                key={`trail-${t.tag_identifier}`}
+                coordinates={trail.map((s) => ({ latitude: s.latitude, longitude: s.longitude }))}
+                strokeColor="rgba(0,122,255,0.45)"
+                strokeWidth={3}
+              />
+            );
+          })}
+        {pins.map((p) => (
+          <Marker key={p.id} coordinate={{ latitude: p.lat, longitude: p.lon }} title={p.name}>
             <Callout>
               <View style={{ maxWidth: 220 }}>
-                <Text style={{ fontWeight: "600" }}>{t.tag_name}</Text>
-                <Text>Last seen {t.ago}</Text>
-                {t.location_name ? <Text>{t.location_name}</Text> : null}
+                <Text style={{ fontWeight: "600" }}>{p.name}</Text>
+                <Text>Last seen {p.ago}</Text>
+                {p.location_name ? <Text>{p.location_name}</Text> : null}
               </View>
             </Callout>
           </Marker>
         ))}
       </MapView>
+      <TimeSlider
+        timeline={timeline}
+        index={index}
+        live={live}
+        label={label}
+        onScrub={(i) => {
+          setLive(false);
+          setIndex(i);
+        }}
+        onLive={() => setLive(true)}
+      />
       <TagSheet tags={tags} onSelect={focusTag} />
     </View>
   );
