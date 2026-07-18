@@ -86,7 +86,13 @@ export default function MapScreen() {
         location_name: null,
       }));
 
-  const label = new Date(effectiveMs).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" });
+  const eff = new Date(effectiveMs);
+  const olderThanWeek = Date.now() - effectiveMs > 7 * 24 * 60 * 60 * 1000;
+  const labelOpts: Intl.DateTimeFormatOptions = olderThanWeek
+    ? { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }
+    : { weekday: "short", hour: "2-digit", minute: "2-digit" };
+  if (olderThanWeek && eff.getFullYear() !== new Date().getFullYear()) labelOpts.year = "numeric";
+  const label = eff.toLocaleString([], labelOpts);
 
   return (
     <View style={styles.container}>
