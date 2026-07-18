@@ -12,9 +12,9 @@ server-side. The only thing the app needs from the backend is a login token.
 > **Design doc:** the full spec lives in the backend repo at
 > [`docs/ios-app/DESIGN.md`](https://github.com/gregakespret/airtag-tracker/blob/master/docs/ios-app/DESIGN.md).
 >
-> **Pitch deck:** the hackathon slides are in [`slides/index.html`](slides/index.html) —
-> open it in a browser (see [`slides/assets/README.md`](slides/assets/README.md) for
-> swapping in real screenshots).
+> **Pitch deck:** the hackathon slides are live at
+> **<https://gregakespret.github.io/airtaghistory-mobile/slides/>**
+> (source: [`slides/index.html`](slides/index.html)). Navigate with ← / →.
 
 ---
 
