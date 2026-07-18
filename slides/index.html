@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AirTag History — Mobile · Hackathon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --paper:#FFFFFF;
+  --water:#F2F5F8;
+  --mist:#F7F9FB;
+  --ink:#0F1B26;
+  --ink-soft:#44546A;
+  --faint:#8593A5;
+  --route:#2557D6;
+  --route-deep:#1B3FA0;
+  --route-wash:#EAF0FE;
+  --amber:#E8A13D;
+  --amber-deep:#B4540A;
+  --green:#0E9F6E;
+  --green-wash:#E7F6F0;
+  --line:#DCE3EA;
+  --line-soft:#E9EEF3;
+  --display:'Bricolage Grotesque',ui-sans-serif,system-ui,sans-serif;
+  --body:'Instrument Sans',ui-sans-serif,system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --shadow-sm:0 1px 2px rgba(15,27,38,.05),0 6px 18px rgba(15,27,38,.06);
+  --shadow-md:0 1px 2px rgba(15,27,38,.06),0 18px 48px rgba(15,27,38,.12);
+  --shadow-phone:0 2px 6px rgba(15,27,38,.10),0 40px 80px rgba(15,27,38,.22);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--body);
+  color:var(--ink);
+  background:var(--water);
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+
+/* ---------- deck / slide scaffolding ---------- */
+.deck{position:fixed;inset:0}
+.slide{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  padding:clamp(28px,5.2vh,64px) clamp(28px,6vw,110px);
+  background:var(--paper);
+  opacity:0;visibility:hidden;
+  transform:scale(.985);
+  transition:opacity .5s ease,transform .5s ease,visibility .5s;
+  overflow:hidden;
+}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.prev{transform:scale(1.015)}
+
+/* soft map-grid atmosphere shared by all slides */
+.slide::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
+  background-size:56px 56px;
+  -webkit-mask-image:radial-gradient(ellipse 90% 70% at 88% 8%,black 0%,transparent 62%);
+  mask-image:radial-gradient(ellipse 90% 70% at 88% 8%,black 0%,transparent 62%);
+  opacity:.7;
+}
+.slide > *{position:relative;z-index:1}
+
+/* ---------- shared type ---------- */
+.eyebrow{
+  font-family:var(--mono);font-size:clamp(.62rem,.86vw,.76rem);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--route);font-weight:500;
+  display:flex;align-items:center;gap:10px;
+}
+.eyebrow::before{content:"";width:22px;height:2px;background:var(--route);border-radius:2px}
+h1,h2,h3{font-family:var(--display);line-height:1.04;letter-spacing:-.025em;font-weight:600}
+.title-xl{font-size:clamp(2.6rem,7.4vw,6.2rem);line-height:.98}
+.title-lg{font-size:clamp(2rem,4.6vw,3.6rem)}
+.title-md{font-size:clamp(1.5rem,3vw,2.35rem)}
+.lede{font-family:var(--body);font-size:clamp(1.02rem,1.55vw,1.32rem);color:var(--ink-soft);line-height:1.5;max-width:60ch;font-weight:400}
+.coord{font-family:var(--mono);font-size:clamp(.6rem,.82vw,.72rem);color:var(--faint);letter-spacing:.04em}
+.hi{color:var(--route)}
+.hi-amber{color:var(--amber-deep)}
+em{font-style:normal;color:var(--route);font-weight:600}
+
+/* ---------- persistent chrome ---------- */
+.brandbar{
+  position:fixed;top:0;left:0;right:0;height:52px;z-index:40;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(20px,4vw,44px);pointer-events:none;
+}
+.brandbar .brand{display:flex;align-items:center;gap:9px;font-family:var(--display);font-weight:700;font-size:1rem;letter-spacing:-.02em}
+.brandbar .brand svg{width:22px;height:22px}
+.brandbar .site{font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;color:var(--faint)}
+.progress{position:fixed;left:0;bottom:0;height:3px;background:var(--route);z-index:41;transition:width .5s ease;box-shadow:0 0 0 1px rgba(37,87,214,.25)}
+.counter{position:fixed;right:clamp(20px,4vw,44px);bottom:16px;z-index:41;font-family:var(--mono);font-size:.72rem;color:var(--faint);letter-spacing:.06em}
+.counter b{color:var(--ink)}
+.hint{position:fixed;left:clamp(20px,4vw,44px);bottom:14px;z-index:41;font-family:var(--mono);font-size:.66rem;color:var(--faint);letter-spacing:.05em;opacity:.9}
+.hint kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1px 5px;background:var(--paper);color:var(--ink-soft);font-family:var(--mono);font-size:.62rem}
+
+/* ---------- layout helpers ---------- */
+.grow{flex:1;min-height:0;display:flex}
+.split{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,4vw,64px);align-items:center;width:100%}
+.split.text-left{grid-template-columns:1.1fr .9fr}
+.stack{display:flex;flex-direction:column;justify-content:center;gap:clamp(14px,2.4vh,26px);min-width:0}
+.center-col{display:flex;flex-direction:column;justify-content:center;height:100%;gap:clamp(16px,2.6vh,30px)}
+.pinstack{display:flex;align-items:center;justify-content:center;height:100%}
+
+/* logo mark */
+.mark{color:var(--route)}
+
+/* ============================================================
+   DEVICE FRAMES  (swap .screen contents for real screenshots)
+   ============================================================ */
+.phone{
+  width:min(320px,30vw);aspect-ratio:1170/2532;position:relative;flex:none;
+  background:#0c1116;border-radius:44px;padding:12px;
+  box-shadow:var(--shadow-phone);
+}
+.phone .screen{
+  position:absolute;inset:12px;border-radius:33px;overflow:hidden;background:var(--water);
+  display:flex;flex-direction:column;
+}
+.phone .notch{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:30%;height:22px;background:#0c1116;border-radius:0 0 14px 14px;z-index:6}
+.phone img.shot{position:absolute;inset:12px;width:calc(100% - 24px);height:calc(100% - 24px);object-fit:cover;border-radius:33px;z-index:7}
+
+/* browser frame */
+.browser{
+  width:100%;max-width:640px;border-radius:14px;overflow:hidden;
+  background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow-md);
+}
+.browser .bar{height:38px;background:var(--mist);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 14px}
+.browser .dots{display:flex;gap:6px}
+.browser .dots i{width:11px;height:11px;border-radius:50%;background:var(--line);display:block}
+.browser .dots i:nth-child(1){background:#F0776B}.browser .dots i:nth-child(2){background:#F2C14E}.browser .dots i:nth-child(3){background:#5EC98B}
+.browser .url{flex:1;height:23px;background:var(--paper);border:1px solid var(--line);border-radius:7px;display:flex;align-items:center;gap:7px;padding:0 11px;font-family:var(--mono);font-size:.72rem;color:var(--ink-soft)}
+.browser .url svg{width:11px;height:11px;color:var(--green)}
+.browser .viewport{position:relative}
+.browser img.shot{width:100%;display:block}
+
+/* ============================================================
+   MAP MOCKUP  (used inside phone + browser)
+   ============================================================ */
+.map{position:absolute;inset:0;background:
+  radial-gradient(120% 90% at 20% 10%,#EAF2F8 0%,#E4EDF4 55%,#DCE8F0 100%);
+  overflow:hidden}
+.map .land{position:absolute;border-radius:40% 55% 48% 52%/50% 45% 55% 50%;background:#F4F7F3;opacity:.85}
+.map .water-body{position:absolute;background:#D3E4EF;border-radius:50% 40% 55% 45%/45% 55% 42% 58%;opacity:.9}
+.map .road{position:absolute;height:3px;background:#fff;border-radius:3px;box-shadow:0 0 0 1px #E2E9EF;transform-origin:left center}
+.map .road.min{height:2px;background:#EBF0F4}
+.map .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(120,140,160,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(120,140,160,.08) 1px,transparent 1px);background-size:34px 34px}
+
+/* route trail (time-travel) */
+.trail{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.trail path.route{fill:none;stroke:var(--route);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 1px 2px rgba(37,87,214,.35))}
+.trail path.ghost{fill:none;stroke:var(--route);stroke-width:3;stroke-linecap:round;stroke-dasharray:1 8;opacity:.4}
+.trail circle.stop{fill:#fff;stroke:var(--route);stroke-width:2.5}
+
+/* pins */
+.pin{position:absolute;transform:translate(-50%,-100%);z-index:5;display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 4px 6px rgba(15,27,38,.28))}
+.pin .head{width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--route);border:2.5px solid #fff;display:flex;align-items:center;justify-content:center}
+.pin .head span{transform:rotate(45deg);font-size:12px;line-height:1}
+.pin.amber .head{background:var(--amber)}
+.pin.green .head{background:var(--green)}
+.pin.gray .head{background:var(--faint)}
+.pin .tag{margin-top:5px;font-family:var(--mono);font-size:9px;background:#fff;color:var(--ink);padding:2px 6px;border-radius:5px;box-shadow:var(--shadow-sm);white-space:nowrap;letter-spacing:.02em}
+
+/* callout bubble on map */
+.callout{position:absolute;z-index:6;background:#fff;border-radius:12px;box-shadow:var(--shadow-md);padding:9px 11px;width:150px;transform:translate(-50%,-118%)}
+.callout .c-name{font-family:var(--display);font-weight:600;font-size:12px}
+.callout .c-meta{font-family:var(--mono);font-size:8.5px;color:var(--ink-soft);margin-top:2px;letter-spacing:.02em}
+.callout .c-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:4px;vertical-align:middle}
+
+/* phone status bar + header */
+.p-status{height:30px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 20px 4px;font-family:var(--mono);font-size:10px;color:var(--ink);font-weight:500;position:relative;z-index:8}
+.p-header{position:absolute;top:34px;left:14px;right:14px;z-index:8;display:flex;align-items:center;justify-content:space-between}
+.p-header .h-title{font-family:var(--display);font-weight:600;font-size:15px}
+.p-header .h-chip{font-family:var(--mono);font-size:9px;background:#fff;padding:4px 9px;border-radius:20px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:5px}
+.p-header .h-chip .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px var(--green-wash)}
+
+/* ---------- bottom sheet (tag list) inside phone ---------- */
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -8px 30px rgba(15,27,38,.14);padding:8px 14px 16px;z-index:9}
+.sheet .grab{width:38px;height:4px;border-radius:4px;background:var(--line);margin:4px auto 10px}
+.sheet .s-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+.sheet .s-head b{font-family:var(--display);font-size:13px;font-weight:600}
+.sheet .s-head span{font-family:var(--mono);font-size:9px;color:var(--faint)}
+.taglist{display:flex;flex-direction:column;gap:2px}
+.tagrow{display:flex;align-items:center;gap:9px;padding:8px 4px;border-bottom:1px solid var(--line-soft)}
+.tagrow:last-child{border-bottom:0}
+.tagrow .dot{width:9px;height:9px;border-radius:50%;flex:none}
+.tagrow .dot.g{background:var(--green);box-shadow:0 0 0 3px var(--green-wash)}
+.tagrow .dot.a{background:var(--amber);box-shadow:0 0 0 3px #FCF0E4}
+.tagrow .dot.x{background:var(--faint);box-shadow:0 0 0 3px #EEF1F4}
+.tagrow .t-main{flex:1;min-width:0}
+.tagrow .t-name{font-family:var(--display);font-weight:600;font-size:12.5px}
+.tagrow .t-loc{font-family:var(--body);font-size:10.5px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tagrow .t-dwell{font-family:var(--mono);font-size:9px;color:var(--faint);text-align:right;white-space:nowrap}
+.tagrow .t-dwell b{display:block;color:var(--ink);font-size:11px;font-weight:500}
+
+/* ---------- time slider inside phone ---------- */
+.slider-card{position:absolute;left:12px;right:12px;bottom:14px;background:#fff;border-radius:18px;box-shadow:0 -4px 24px rgba(15,27,38,.16);padding:13px 15px 15px;z-index:9}
+.slider-card .sc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.slider-card .sc-time{font-family:var(--display);font-weight:600;font-size:15px}
+.slider-card .sc-time small{font-family:var(--mono);font-weight:400;font-size:9px;color:var(--faint);display:block;letter-spacing:.03em;margin-top:1px}
+.slider-card .live-btn{font-family:var(--body);font-weight:600;font-size:11px;color:#fff;background:var(--route);padding:6px 12px;border-radius:20px;display:flex;align-items:center;gap:5px}
+.slider-card .live-btn.past{background:var(--water);color:var(--ink-soft)}
+.slider-card .live-btn span.b{width:7px;height:7px;border-radius:50%;background:currentColor}
+.track{position:relative;height:5px;background:var(--line);border-radius:5px;margin:6px 2px}
+.track .fill{position:absolute;left:0;top:0;bottom:0;background:var(--route);border-radius:5px}
+.track .knob{position:absolute;top:50%;width:19px;height:19px;border-radius:50%;background:#fff;border:3px solid var(--route);transform:translate(-50%,-50%);box-shadow:var(--shadow-sm)}
+.track .tick{position:absolute;top:50%;width:3px;height:3px;border-radius:50%;background:var(--faint);transform:translate(-50%,-50%)}
+.scale{display:flex;justify-content:space-between;margin-top:9px;font-family:var(--mono);font-size:8px;color:var(--faint)}
+
+/* ============================================================
+   SLIDE 1 — TITLE
+   ============================================================ */
+.s-title{justify-content:center;align-items:flex-start;text-align:left}
+.s-title .kicker{font-family:var(--mono);font-size:clamp(.66rem,1vw,.82rem);letter-spacing:.18em;text-transform:uppercase;color:var(--route);margin-bottom:22px}
+.s-title h1{margin-bottom:4px}
+.s-title .sub{margin-top:26px;max-width:54ch}
+.s-title .meta{margin-top:38px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.chip{font-family:var(--mono);font-size:.74rem;letter-spacing:.03em;color:var(--ink-soft);background:var(--paper);border:1px solid var(--line);border-radius:30px;padding:7px 15px}
+.chip.solid{background:var(--route);color:#fff;border-color:var(--route);font-weight:500}
+.title-route{position:absolute;right:-2%;top:0;bottom:0;width:44%;pointer-events:none;opacity:.9}
+
+/* ============================================================
+   SLIDE 2 — THE MOVE (map with two pins traveling)
+   ============================================================ */
+.bigmap{position:relative;width:100%;height:100%;border-radius:20px;overflow:hidden;box-shadow:var(--shadow-md);border:1px solid var(--line)}
+
+/* generic content card list */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow-sm)}
+.card h3{font-size:1.05rem;margin-bottom:4px}
+.card p{font-size:.95rem;color:var(--ink-soft);line-height:1.45}
+.card .k{font-family:var(--mono);font-size:.68rem;color:var(--route);letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:7px}
+
+/* problem: before/after */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:22px;width:100%;align-items:stretch}
+.ba .panel{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:0;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-sm)}
+.ba .panel.win{border-color:var(--route);box-shadow:0 0 0 2px var(--route-wash),var(--shadow-md)}
+.ba .p-label{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.ba .p-label b{font-family:var(--display);font-size:1.05rem;font-weight:600}
+.ba .p-label .badge{font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:20px;background:var(--water);color:var(--faint)}
+.ba .panel.win .p-label .badge{background:var(--route-wash);color:var(--route)}
+.ba .p-body{position:relative;flex:1;min-height:230px}
+.ba .p-foot{padding:13px 18px;border-top:1px solid var(--line);font-size:.9rem;color:var(--ink-soft);line-height:1.4}
+.ba .p-foot b{color:var(--ink)}
+
+/* stat row */
+.stats{display:flex;gap:clamp(18px,3vw,48px);flex-wrap:wrap}
+.stat .n{font-family:var(--display);font-weight:600;font-size:clamp(1.8rem,3.6vw,2.8rem);line-height:1;letter-spacing:-.03em}
+.stat .n small{font-size:.5em;color:var(--faint);font-weight:500}
+.stat .l{font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin-top:8px}
+
+/* ============================================================
+   SLIDE — ARCHITECTURE
+   ============================================================ */
+.pipe{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;width:100%;align-items:stretch}
+.node{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow-sm);position:relative;display:flex;flex-direction:column;gap:8px}
+.node.accent{border-color:var(--route);box-shadow:0 0 0 2px var(--route-wash),var(--shadow-sm)}
+.node .n-num{font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;color:var(--faint)}
+.node .n-title{font-family:var(--display);font-weight:600;font-size:1.02rem;letter-spacing:-.01em}
+.node .n-tech{font-family:var(--mono);font-size:.66rem;color:var(--route);letter-spacing:.02em}
+.node .n-desc{font-size:.85rem;color:var(--ink-soft);line-height:1.4}
+.node .arrow{position:absolute;right:-13px;top:50%;transform:translateY(-50%);z-index:3;color:var(--faint);font-size:16px}
+.pipe .node:last-child .arrow{display:none}
+.note{margin-top:20px;font-size:.92rem;color:var(--ink-soft);background:var(--mist);border-left:3px solid var(--route);border-radius:0 10px 10px 0;padding:13px 18px;line-height:1.5}
+.note b{color:var(--ink)}
+
+/* evidence report doc */
+.doc{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-md);padding:22px 24px;font-family:var(--body);max-width:460px}
+.doc .d-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:14px}
+.doc .d-head .d-t{font-family:var(--display);font-weight:700;font-size:1.15rem}
+.doc .d-head .d-id{font-family:var(--mono);font-size:.66rem;color:var(--faint);text-align:right;line-height:1.5}
+.timeline{display:flex;flex-direction:column}
+.tl-row{display:grid;grid-template-columns:70px 1fr auto;gap:12px;padding:9px 0;border-bottom:1px solid var(--line-soft);align-items:baseline}
+.tl-row:last-child{border-bottom:0}
+.tl-row .tl-date{font-family:var(--mono);font-size:.66rem;color:var(--faint)}
+.tl-row .tl-place b{font-family:var(--display);font-weight:600;font-size:.9rem;display:block}
+.tl-row .tl-place span{font-family:var(--mono);font-size:.62rem;color:var(--faint)}
+.tl-row .tl-flag{font-family:var(--mono);font-size:.66rem;color:var(--amber-deep);background:#FCF0E4;padding:3px 8px;border-radius:20px;white-space:nowrap}
+
+/* ============================================================
+   SLIDE — CLOSING / CTA
+   ============================================================ */
+.s-close{justify-content:center;align-items:center;text-align:center;background:radial-gradient(120% 90% at 50% 0%,#F5F8FF 0%,#FFFFFF 55%)}
+.s-close h2{max-width:20ch;margin:0 auto}
+.s-close .lede{margin:22px auto 0;text-align:center}
+.cta{margin-top:40px;display:inline-flex;flex-direction:column;align-items:center;gap:16px}
+.cta .btn-primary{font-family:var(--body);font-weight:600;font-size:1.15rem;color:#fff;background:var(--route);padding:17px 40px;border-radius:14px;text-decoration:none;box-shadow:0 2px 4px rgba(37,87,214,.35),0 14px 32px rgba(37,87,214,.28);display:inline-flex;align-items:center;gap:12px;transition:transform .15s,box-shadow .15s}
+.cta .btn-primary:hover{transform:translateY(-2px);box-shadow:0 4px 8px rgba(37,87,214,.4),0 20px 44px rgba(37,87,214,.34)}
+.cta .btn-primary svg{width:20px;height:20px}
+.cta .url-line{font-family:var(--mono);font-size:1rem;letter-spacing:.02em;color:var(--ink)}
+.cta .fine{font-family:var(--mono);font-size:.72rem;color:var(--faint);letter-spacing:.03em}
+
+/* two-up phones */
+.phones{display:flex;gap:clamp(20px,3vw,46px);align-items:center;justify-content:center;height:100%}
+.phones .phone{width:min(280px,26vw)}
+
+/* callback quote */
+.callback{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px 22px;box-shadow:var(--shadow-sm);max-width:44ch}
+.callback .q{font-family:var(--display);font-size:1.15rem;font-weight:500;line-height:1.35;letter-spacing:-.01em}
+.callback .q .flag{margin-right:6px}
+.callback .a{font-family:var(--mono);font-size:.72rem;color:var(--faint);margin-top:10px;letter-spacing:.03em}
+
+/* list with route bullets */
+.rlist{display:flex;flex-direction:column;gap:14px}
+.rlist li{list-style:none;display:flex;gap:14px;align-items:flex-start}
+.rlist li .b{flex:none;width:11px;height:11px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--route);margin-top:6px}
+.rlist li.amber .b{background:var(--amber)}
+.rlist li.gray .b{background:var(--faint)}
+.rlist li p{font-size:1.02rem;color:var(--ink);line-height:1.4}
+.rlist li p b{font-family:var(--display);font-weight:600}
+.rlist li p span{color:var(--ink-soft);font-weight:400}
+
+/* screenshot swap hint (only shows faintly) */
+.swap{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:20;font-family:var(--mono);font-size:8px;color:var(--faint);opacity:.55;letter-spacing:.03em;white-space:nowrap}
+
+/* responsive: stack splits on short/narrow */
+@media(max-width:960px){
+  .split,.split.text-left{grid-template-columns:1fr;gap:20px}
+  .pipe{grid-template-columns:1fr 1fr}
+  .phone{width:min(240px,44vw)}
+  .ba{grid-template-columns:1fr}
+}
+
+/* print → one slide per page (PDF backup) */
+@media print{
+  body{overflow:visible;background:#fff}
+  .brandbar,.progress,.counter,.hint{display:none}
+  .deck{position:static}
+  .slide{position:relative;opacity:1!important;visibility:visible!important;transform:none!important;page-break-after:always;height:100vh;inset:auto}
+  .slide::before{opacity:.4}
+}
+</style>
+</head>
+<body>
+
+<!-- persistent brand chrome -->
+<div class="brandbar">
+  <div class="brand"><svg viewBox="0 0 24 24" fill="none" class="mark"><path d="M12 2C7.6 2 4 5.6 4 10c0 5.5 8 12 8 12s8-6.5 8-12c0-4.4-3.6-8-8-8Z" fill="currentColor"/><circle cx="12" cy="10" r="3" fill="#fff"/></svg>AirTag History</div>
+  <div class="site">airtaghistory.com</div>
+</div>
+<div class="progress" id="progress"></div>
+<div class="hint"><kbd>←</kbd> <kbd>→</kbd> to navigate</div>
+<div class="counter"><b id="cur">01</b> / <span id="total">12</span></div>
+
+<div class="deck" id="deck">
+
+  <!-- ========== 1 · TITLE ========== -->
+  <section class="slide s-title active">
+    <svg class="title-route" viewBox="0 0 300 600" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <path d="M60 40 C 150 90, 40 180, 150 240 S 260 380, 120 440 S 180 560, 240 560" fill="none" stroke="#2557D6" stroke-width="3" stroke-dasharray="1 10" stroke-linecap="round" opacity=".35"/>
+      <circle cx="60" cy="40" r="7" fill="#fff" stroke="#2557D6" stroke-width="3"/>
+      <circle cx="150" cy="240" r="7" fill="#fff" stroke="#2557D6" stroke-width="3"/>
+      <circle cx="120" cy="440" r="7" fill="#fff" stroke="#2557D6" stroke-width="3"/>
+      <g transform="translate(240,560)"><path d="M0 -34C-9 -34 -16 -27 -16 -18 -16 -6 0 8 0 8S16 -6 16 -18C16 -27 9 -34 0 -34Z" fill="#2557D6" stroke="#fff" stroke-width="3"/><circle cx="0" cy="-18" r="5.5" fill="#fff"/></g>
+    </svg>
+    <div class="kicker">Hackathon · Mobile · airtaghistory.com</div>
+    <h1 class="title-xl">Where has<br>your stuff<br><span class="hi">actually been?</span></h1>
+    <p class="lede sub">A native iOS app that turns Apple's single stale pin into a scrubable timeline — watch every AirTag move back through its own history.</p>
+    <div class="meta">
+      <span class="chip solid">AirTag History — Mobile</span>
+      <span class="chip">Expo · React Native · Apple Maps</span>
+      <span class="chip">read-only client</span>
+    </div>
+  </section>
+
+  <!-- ========== 2 · THE MOVE ========== -->
+  <section class="slide">
+    <div class="split text-left" style="height:100%">
+      <div class="stack">
+        <div class="eyebrow">The story · a true one</div>
+        <h2 class="title-lg">I moved from the US<br>to <span class="hi">Slovenia.</span></h2>
+        <p class="lede">Two things I really didn't want to lose in the shuffle: my <em>car</em> and my <em>car keys</em>. So I dropped an AirTag in each and shipped the car across an ocean.</p>
+        <div class="cards" style="margin-top:6px">
+          <div class="card">
+            <span class="k">📍 Car · the Hyundai</span>
+            <p>On a transport ship, then a truck, then a lot — days at a time in someone else's hands.</p>
+          </div>
+          <div class="card">
+            <span class="k">🔑 Keys · the keychain</span>
+            <p>Small, easy to misplace, and — plot twist — travelling separately.</p>
+          </div>
+        </div>
+      </div>
+      <div class="pinstack">
+        <div class="bigmap">
+          <div class="map">
+            <div class="grid"></div>
+            <div class="water-body" style="left:-10%;top:8%;width:52%;height:44%"></div>
+            <div class="water-body" style="right:-14%;bottom:-6%;width:46%;height:40%"></div>
+            <div class="land" style="left:30%;top:22%;width:55%;height:56%"></div>
+            <div class="road" style="left:18%;top:60%;width:60%;transform:rotate(-18deg)"></div>
+            <div class="road min" style="left:40%;top:40%;width:40%;transform:rotate(12deg)"></div>
+            <svg class="trail" viewBox="0 0 400 300" preserveAspectRatio="none">
+              <path class="ghost" d="M60 220 C 120 200, 150 150, 230 120 S 320 70, 350 60"/>
+              <circle class="stop" cx="60" cy="220" r="5"/>
+              <circle class="stop" cx="230" cy="120" r="5"/>
+            </svg>
+            <div class="pin" style="left:16%;top:74%"><div class="head"><span>📍</span></div><div class="tag">Car · US</div></div>
+            <div class="pin amber" style="left:60%;top:42%"><div class="head"><span>🔑</span></div><div class="tag">Keys · en route</div></div>
+            <div class="pin green" style="left:87%;top:22%"><div class="head"><span>🏁</span></div><div class="tag">Home · SI</div></div>
+          </div>
+          <div class="swap">↔ swap for real map screenshot → assets/map-move.png</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 3 · THE PROBLEM ========== -->
+  <section class="slide">
+    <div class="center-col">
+      <div class="eyebrow">The problem</div>
+      <h2 class="title-lg">Find My shows you <span class="hi">one pin.</span><br>Then it forgets everything else.</h2>
+      <div class="ba" style="flex:1;margin-top:8px">
+        <div class="panel">
+          <div class="p-label"><b>What Find My shows</b><span class="badge">last seen · 6 days ago</span></div>
+          <div class="p-body">
+            <div class="map">
+              <div class="grid"></div>
+              <div class="water-body" style="right:-16%;top:-10%;width:44%;height:50%"></div>
+              <div class="road" style="left:10%;top:55%;width:70%;transform:rotate(-8deg)"></div>
+              <div class="pin gray" style="left:50%;top:56%"><div class="head"><span>📦</span></div><div class="tag">Car</div></div>
+            </div>
+          </div>
+          <div class="p-foot">One dot, going stale. <b>Where was it on Tuesday? How long has it sat there?</b> No answer.</div>
+        </div>
+        <div class="panel win">
+          <div class="p-label"><b>What AirTag History shows</b><span class="badge">polling every 5 min</span></div>
+          <div class="p-body">
+            <div class="map">
+              <div class="grid"></div>
+              <div class="water-body" style="right:-16%;top:-10%;width:44%;height:50%"></div>
+              <div class="road" style="left:10%;top:55%;width:70%;transform:rotate(-8deg)"></div>
+              <svg class="trail" viewBox="0 0 400 260" preserveAspectRatio="none">
+                <path class="route" d="M40 200 C 110 190, 130 120, 200 130 S 300 90, 360 70"/>
+                <circle class="stop" cx="40" cy="200" r="5.5"/>
+                <circle class="stop" cx="200" cy="130" r="5.5"/>
+                <circle class="stop" cx="290" cy="98" r="5.5"/>
+              </svg>
+              <div class="pin" style="left:88%;top:26%"><div class="head"><span>📍</span></div></div>
+            </div>
+          </div>
+          <div class="p-foot">Same tag, same week — <b>a route with every stop timestamped.</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 4 · THE TIMEZONE TRAP ========== -->
+  <section class="slide">
+    <div class="split" style="height:100%">
+      <div class="stack">
+        <div class="eyebrow">Why an app · not just the website</div>
+        <h2 class="title-lg">My car was awake<br>while <span class="hi">I was asleep.</span></h2>
+        <p class="lede">The car crossed timezones. To catch the moment it moved, I'd have to open Find My, remember which tag, squint at one pin — <em>right then.</em> Miss the window and the pin just quietly overwrites itself.</p>
+        <ul class="rlist" style="margin-top:6px">
+          <li><div class="b"></div><p><b>Glanceable.</b> <span>Open the app, every tag and how long it's been parked there is right there — no digging.</span></p></li>
+          <li class="amber"><div class="b"></div><p><b>Dwell time, not just place.</b> <span>“6 days at the port” is the fact I actually wanted.</span></p></li>
+          <li class="gray"><div class="b"></div><p><b>History has my back.</b> <span>Asleep when it moved? The timeline caught it anyway.</span></p></li>
+        </ul>
+      </div>
+      <div class="pinstack">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="screen">
+            <div class="map">
+              <div class="grid"></div>
+              <div class="water-body" style="left:-20%;top:12%;width:60%;height:34%"></div>
+              <div class="road" style="left:8%;top:64%;width:80%;transform:rotate(-10deg)"></div>
+              <div class="road min" style="left:20%;top:40%;width:55%;transform:rotate(8deg)"></div>
+            </div>
+            <div class="p-status"><span>2:14</span><span>◐ asleep · UTC+1</span></div>
+            <div class="p-header"><div class="h-title">Your tags</div><div class="h-chip"><span class="live-dot"></span>Live</div></div>
+            <div class="callout" style="left:52%;top:40%">
+              <div class="c-name">Car · the Hyundai</div>
+              <div class="c-meta"><span class="c-dot"></span>Long Beach port · 6d here</div>
+            </div>
+            <div class="pin" style="left:52%;top:40%"><div class="head"><span>📍</span></div></div>
+            <div class="pin amber" style="left:30%;top:62%"><div class="head"><span>🔑</span></div><div class="tag">Keys</div></div>
+            <div class="sheet">
+              <div class="grab"></div>
+              <div class="s-head"><b>3 tags</b><span>updated 4 min ago</span></div>
+              <div class="taglist">
+                <div class="tagrow"><span class="dot g"></span><div class="t-main"><div class="t-name">Car</div><div class="t-loc">Long Beach port, CA</div></div><div class="t-dwell">here for<b>6 days</b></div></div>
+                <div class="tagrow"><span class="dot a"></span><div class="t-main"><div class="t-name">Keys</div><div class="t-loc">Panama City, PA</div></div><div class="t-dwell">here for<b>2 days</b></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="swap">↔ swap → assets/app-map.png</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 5 · THE PANAMA TWIST ========== -->
+  <section class="slide">
+    <div class="split text-left" style="height:100%">
+      <div class="stack">
+        <div class="eyebrow">Plot twist · true story</div>
+        <h2 class="title-lg">Then my car and my keys<br><span class="hi-amber">got separated in Panama.</span> 🇵🇦</h2>
+        <p class="lede">Two AirTags that left together, drifting apart on a map at 2 a.m. A single Find My pin can't tell you that story. <em>A timeline can.</em></p>
+        <div class="callback" style="margin-top:6px">
+          <div class="q"><span class="flag">🔑</span>“Keys: still in Panama City.”<br><span class="flag">📍</span>“Car: already 400 km up the coast.”</div>
+          <div class="a">— the exact moment history earned its keep</div>
+        </div>
+      </div>
+      <div class="pinstack">
+        <div class="bigmap">
+          <div class="map">
+            <div class="grid"></div>
+            <div class="water-body" style="left:-12%;top:-12%;width:50%;height:46%"></div>
+            <div class="water-body" style="right:-14%;bottom:-10%;width:48%;height:44%"></div>
+            <div class="land" style="left:18%;top:20%;width:70%;height:64%"></div>
+            <div class="road" style="left:24%;top:70%;width:56%;transform:rotate(-30deg)"></div>
+            <svg class="trail" viewBox="0 0 400 300" preserveAspectRatio="none">
+              <path class="route" d="M120 230 C 160 220, 180 200, 210 190"/>
+              <path class="route" d="M210 190 C 250 150, 300 120, 340 70" style="stroke:#E8A13D"/>
+              <circle class="stop" cx="120" cy="230" r="5.5"/>
+              <circle class="stop" cx="210" cy="190" r="6" style="stroke:#B4540A"/>
+            </svg>
+            <div class="pin amber" style="left:30%;top:77%"><div class="head"><span>🔑</span></div><div class="tag">Keys · Panama City</div></div>
+            <div class="pin" style="left:85%;top:23%"><div class="head"><span>📍</span></div><div class="tag">Car · +400 km</div></div>
+            <div class="callout" style="left:52%;top:60%;width:130px"><div class="c-name">↔ Separated here</div><div class="c-meta">08 Nov · 03:12 local</div></div>
+          </div>
+          <div class="swap">↔ swap for real screenshot → assets/panama-split.png</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 6 · THE APP / MAP SCREEN ========== -->
+  <section class="slide">
+    <div class="split" style="height:100%">
+      <div class="stack">
+        <div class="eyebrow">The app · map screen</div>
+        <h2 class="title-lg">Every tag,<br>on <span class="hi">one map.</span></h2>
+        <p class="lede">Native Apple Maps — no API key, no web view. Pins are colour-coded by freshness; tap one for last-seen detail. It's a <em>read-only client</em> over the backend's JSON API, so the app never touches your Apple ID.</p>
+        <div class="stats" style="margin-top:8px">
+          <div class="stat"><div class="n">0</div><div class="l">Apple creds in the app</div></div>
+          <div class="stat"><div class="n">5<small> min</small></div><div class="l">server poll interval</div></div>
+          <div class="stat"><div class="n">1</div><div class="l">API seam · Bearer token</div></div>
+        </div>
+      </div>
+      <div class="pinstack">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="screen">
+            <div class="map">
+              <div class="grid"></div>
+              <div class="water-body" style="right:-18%;top:6%;width:50%;height:40%"></div>
+              <div class="road" style="left:6%;top:58%;width:84%;transform:rotate(-6deg)"></div>
+              <div class="road min" style="left:24%;top:36%;width:50%;transform:rotate(14deg)"></div>
+            </div>
+            <div class="p-status"><span>9:41</span><span>●●● 5G</span></div>
+            <div class="p-header"><div class="h-title">Your tags</div><div class="h-chip"><span class="live-dot"></span>Live</div></div>
+            <div class="pin green" style="left:34%;top:46%"><div class="head"><span>📍</span></div><div class="tag">Car</div></div>
+            <div class="pin amber" style="left:64%;top:38%"><div class="head"><span>🔑</span></div><div class="tag">Keys</div></div>
+            <div class="pin green" style="left:52%;top:64%"><div class="head"><span>🎒</span></div><div class="tag">Backpack</div></div>
+            <div class="sheet">
+              <div class="grab"></div>
+              <div class="s-head"><b>3 tags</b><span>updated just now</span></div>
+              <div class="taglist">
+                <div class="tagrow"><span class="dot g"></span><div class="t-main"><div class="t-name">Car</div><div class="t-loc">Ljubljana, Center</div></div><div class="t-dwell">seen<b>now</b></div></div>
+                <div class="tagrow"><span class="dot a"></span><div class="t-main"><div class="t-name">Keys</div><div class="t-loc">Panama City, PA</div></div><div class="t-dwell">seen<b>3h ago</b></div></div>
+                <div class="tagrow"><span class="dot g"></span><div class="t-main"><div class="t-name">Backpack</div><div class="t-loc">Home</div></div><div class="t-dwell">seen<b>12m ago</b></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="swap">↔ swap → assets/app-map.png</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 7 · TIME TRAVEL ========== -->
+  <section class="slide">
+    <div class="split" style="height:100%">
+      <div class="pinstack" style="order:1">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="screen">
+            <div class="map">
+              <div class="grid"></div>
+              <div class="water-body" style="left:-16%;bottom:-8%;width:52%;height:38%"></div>
+              <div class="road" style="left:10%;top:50%;width:78%;transform:rotate(-9deg)"></div>
+              <svg class="trail" viewBox="0 0 300 500" preserveAspectRatio="none">
+                <path class="ghost" d="M60 120 C 120 160, 90 240, 170 280"/>
+                <path class="route" d="M170 280 C 230 310, 200 380, 120 410"/>
+                <circle class="stop" cx="60" cy="120" r="5"/>
+                <circle class="stop" cx="170" cy="280" r="6" style="stroke-width:3"/>
+              </svg>
+              <div class="pin" style="left:57%;top:56%"><div class="head"><span>📍</span></div><div class="tag">Car · 14:03</div></div>
+            </div>
+            <div class="p-status"><span>9:41</span><span>time travel</span></div>
+            <div class="p-header"><div class="h-title">Car</div><div class="h-chip">Jun 24</div></div>
+            <div class="slider-card">
+              <div class="sc-top">
+                <div class="sc-time">Jun 24 · 14:03<small>Storage yard · Long Beach</small></div>
+                <div class="live-btn past"><span class="b"></span>Live</div>
+              </div>
+              <div class="track">
+                <div class="fill" style="width:64%"></div>
+                <div class="tick" style="left:12%"></div><div class="tick" style="left:33%"></div>
+                <div class="tick" style="left:52%"></div><div class="tick" style="left:78%"></div>
+                <div class="knob" style="left:64%"></div>
+              </div>
+              <div class="scale"><span>Jun 22</span><span>Jun 24</span><span>Jun 27</span><span>now</span></div>
+            </div>
+          </div>
+          <div class="swap">↔ swap → assets/app-timetravel.png</div>
+        </div>
+      </div>
+      <div class="stack" style="order:2">
+        <div class="eyebrow">The signature feature</div>
+        <h2 class="title-lg">Drag the slider.<br>Watch <span class="hi">time run backward.</span> ⚡</h2>
+        <p class="lede">Scrub the time-travel control and every pin jumps to where it was at that instant, drawing the trail it took to get there. Tap <em>⚡ Live</em> to snap back to the present.</p>
+        <div class="card" style="margin-top:6px">
+          <span class="k">Pure & testable</span>
+          <p><b>buildTimeline · positionsAt · trailFor</b> — the interpolation logic is pure functions with Jest tests. The map screen just renders what they return.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 8 · FRESHNESS AT A GLANCE ========== -->
+  <section class="slide">
+    <div class="split text-left" style="height:100%">
+      <div class="stack">
+        <div class="eyebrow">The tag sheet</div>
+        <h2 class="title-lg">“How long has it<br>been <span class="hi">there?”</span></h2>
+        <p class="lede">The question Find My never answers. The bottom sheet lists every tag with a <em>freshness dot</em> and its dwell time — green is fresh, amber is going stale, grey has gone quiet. One glance, no map-squinting.</p>
+        <div class="stats" style="margin-top:8px">
+          <div class="stat"><div class="n" style="color:var(--green)">●</div><div class="l">fresh · seen &lt; 1h</div></div>
+          <div class="stat"><div class="n" style="color:var(--amber)">●</div><div class="l">stale · hours</div></div>
+          <div class="stat"><div class="n" style="color:var(--faint)">●</div><div class="l">quiet · no signal</div></div>
+        </div>
+      </div>
+      <div class="pinstack">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="screen">
+            <div class="map">
+              <div class="grid"></div>
+              <div class="water-body" style="right:-14%;top:0;width:44%;height:34%"></div>
+              <div class="road" style="left:8%;top:30%;width:80%;transform:rotate(-6deg)"></div>
+            </div>
+            <div class="p-status"><span>9:41</span><span>●●● 5G</span></div>
+            <div class="p-header"><div class="h-title">Your tags</div><div class="h-chip"><span class="live-dot"></span>Live</div></div>
+            <div class="sheet" style="bottom:0;top:32%">
+              <div class="grab"></div>
+              <div class="s-head"><b>5 tags</b><span>sorted by freshness</span></div>
+              <div class="taglist">
+                <div class="tagrow"><span class="dot g"></span><div class="t-main"><div class="t-name">Car</div><div class="t-loc">Ljubljana, Center</div></div><div class="t-dwell">here for<b>2 days</b></div></div>
+                <div class="tagrow"><span class="dot g"></span><div class="t-main"><div class="t-name">Backpack</div><div class="t-loc">Home</div></div><div class="t-dwell">seen<b>12m ago</b></div></div>
+                <div class="tagrow"><span class="dot a"></span><div class="t-main"><div class="t-name">Keys</div><div class="t-loc">Panama City, PA</div></div><div class="t-dwell">here for<b>2 days</b></div></div>
+                <div class="tagrow"><span class="dot a"></span><div class="t-main"><div class="t-name">Suitcase</div><div class="t-loc">Frankfurt Airport</div></div><div class="t-dwell">seen<b>5h ago</b></div></div>
+                <div class="tagrow"><span class="dot x"></span><div class="t-main"><div class="t-name">Bike</div><div class="t-loc">No signal · overnight</div></div><div class="t-dwell">last seen<b>1d ago</b></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="swap">↔ swap → assets/app-tagsheet.png</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 9 · UNDER THE HOOD ========== -->
+  <section class="slide">
+    <div class="center-col">
+      <div class="eyebrow">Under the hood</div>
+      <h2 class="title-lg">The phone is the easy part.<br>The <span class="hi">hard part is server-side.</span></h2>
+      <div class="pipe" style="margin-top:14px">
+        <div class="node">
+          <div class="arrow">→</div>
+          <div class="n-num">STAGE 01 · rarely</div>
+          <div class="n-title">Extract keys</div>
+          <div class="n-tech">Rust · export-findmy</div>
+          <div class="n-desc">Joins the iCloud Keychain trust circle, decrypts each AirTag's master key from CloudKit.</div>
+        </div>
+        <div class="node">
+          <div class="arrow">→</div>
+          <div class="n-num">STAGE 02 · every 5 min</div>
+          <div class="n-title">Poll & store</div>
+          <div class="n-tech">Python · FastAPI</div>
+          <div class="n-desc">Derives rolling keys, fetches encrypted reports, decrypts, and <b>saves every fix Apple would overwrite.</b></div>
+        </div>
+        <div class="node accent">
+          <div class="arrow">→</div>
+          <div class="n-num">SEAM</div>
+          <div class="n-title">JSON API</div>
+          <div class="n-tech">Bearer token</div>
+          <div class="n-desc">Tags, history, and login — the only three endpoints the app knows about.</div>
+        </div>
+        <div class="node accent">
+          <div class="n-num">CLIENT</div>
+          <div class="n-title">The app</div>
+          <div class="n-tech">Expo · React Native</div>
+          <div class="n-desc">Thin, read-only. Renders maps, pins, and the time-travel timeline. Never sees your Apple ID.</div>
+        </div>
+      </div>
+      <div class="note"><b>Why it's read-only by design:</b> all the risky Apple-data collection lives on the server behind a trust boundary. The app just needs a login token — so it stays simple, low-risk for the App Store, and impossible to leak credentials it never holds.</div>
+    </div>
+  </section>
+
+  <!-- ========== 10 · CLOSE / CTA ========== -->
+  <section class="slide s-close">
+    <div class="eyebrow" style="justify-content:center">Start tracking</div>
+    <h2 class="title-lg">Give your AirTags<br><span class="hi">a memory.</span></h2>
+    <p class="lede">Find My shows one pin. AirTag History remembers the whole journey — on your phone, on the web, in a PDF you can hand to a claims adjuster.</p>
+    <div class="cta">
+      <a class="btn-primary" href="https://airtaghistory.com">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C7.6 2 4 5.6 4 10c0 5.5 8 12 8 12s8-6.5 8-12c0-4.4-3.6-8-8-8Z" fill="#fff"/><circle cx="12" cy="10" r="3" fill="#2557D6"/></svg>
+        Start tracking your AirTags
+      </a>
+      <div class="url-line">airtaghistory.com</div>
+      <div class="fine">one-time Move Pass · no subscription · works with the AirTags you already own</div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var cur = 0;
+  var total = slides.length;
+  document.getElementById('total').textContent = String(total).padStart(2,'0');
+
+  function pad(n){return String(n).padStart(2,'0');}
+  function show(n){
+    n = Math.max(0, Math.min(total-1, n));
+    slides.forEach(function(s,i){
+      s.classList.remove('active','prev');
+      if(i===n) s.classList.add('active');
+      else if(i<n) s.classList.add('prev');
+    });
+    cur = n;
+    document.getElementById('cur').textContent = pad(n+1);
+    document.getElementById('progress').style.width = ((n+1)/total*100) + '%';
+    location.hash = 'slide-' + (n+1);
+  }
+  function next(){ show(cur+1); }
+  function prev(){ show(cur-1); }
+
+  document.addEventListener('keydown', function(e){
+    switch(e.key){
+      case 'ArrowRight': case 'ArrowDown': case ' ': case 'PageDown': e.preventDefault(); next(); break;
+      case 'ArrowLeft': case 'ArrowUp': case 'PageUp': e.preventDefault(); prev(); break;
+      case 'Home': e.preventDefault(); show(0); break;
+      case 'End': e.preventDefault(); show(total-1); break;
+    }
+  });
+
+  // click right/left third to navigate; ignore links
+  document.getElementById('deck').addEventListener('click', function(e){
+    if(e.target.closest('a')) return;
+    if(e.clientX > window.innerWidth*0.5) next(); else prev();
+  });
+
+  // basic touch swipe
+  var tx=0;
+  document.addEventListener('touchstart',function(e){tx=e.changedTouches[0].clientX;},{passive:true});
+  document.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-tx;
+    if(Math.abs(dx)>50){ dx<0?next():prev(); }
+  },{passive:true});
+
+  // deep-link on load
+  var m = location.hash.match(/slide-(\d+)/);
+  show(m ? parseInt(m[1],10)-1 : 0);
+})();
+</script>
+</body>
+</html>
