@@ -1,20 +1,8 @@
 import React from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import { AuthProvider, useAuth } from "./src/auth";
 import LoginScreen from "./src/screens/LoginScreen";
-// TODO(B3): replace placeholder with <MapScreen />
-
-function LoggedInPlaceholder() {
-  const { signOut } = useAuth();
-  return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", gap: 12 }}>
-      <Text>Logged in</Text>
-      <Pressable onPress={signOut}>
-        <Text>Sign out</Text>
-      </Pressable>
-    </View>
-  );
-}
+import MapScreen from "./src/screens/MapScreen";
 
 function Root() {
   const { user, ready } = useAuth();
@@ -25,7 +13,7 @@ function Root() {
       </View>
     );
   }
-  return user ? <LoggedInPlaceholder /> : <LoginScreen />;
+  return user ? <MapScreen /> : <LoginScreen />;
 }
 
 export default function App() {
