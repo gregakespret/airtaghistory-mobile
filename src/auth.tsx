@@ -21,18 +21,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // successful call re-hydrates it; a stale token surfaces as a 401 -> signOut.
   useEffect(() => {
     (async () => {
-      const token = await SecureStore.getItemAsync(TOKEN_KEY);
-      if (token) {
-        api.setToken(token);
-        try {
-          await api.getTags(); // cheap validity probe
-          setUser({ id: 0, email: "", timezone: null }); // placeholder; refreshed on screens
-        } catch {
-          await SecureStore.deleteItemAsync(TOKEN_KEY);
-          api.setToken(null);
+      try {
+        const token = await SecureStore.getItemAsync(TOKEN_KEY);
+        if (token) {
+          api.setToken(token);
+          try {
+            await api.getTags(); // cheap validity probe
+            // Truthy placeholder: `user` is only read for logged-in vs not; its fields are unused in v1.
+            setUser({ id: 0, email: "", timezone: null });
+          } catch {
+            await SecureStore.deleteItemAsync(TOKEN_KEY);
+            api.setToken(null);
+          }
         }
+      } finally {
+        setReady(true);
       }
-      setReady(true);
     })();
   }, []);
 
@@ -44,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = () => {
-    SecureStore.deleteItemAsync(TOKEN_KEY);
+    SecureStore.deleteItemAsync(TOKEN_KEY).catch(() => {});
     api.setToken(null);
     setUser(null);
   };
