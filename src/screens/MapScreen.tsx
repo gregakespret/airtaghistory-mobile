@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import MapView, { Marker, Callout, Region } from "react-native-maps";
 import { api, Tag, ApiError } from "../api";
 import { useAuth } from "../auth";
+import TagSheet from "../components/TagSheet";
 
 function regionForTags(tags: Tag[]): Region | undefined {
   if (tags.length === 0) return undefined;
@@ -22,6 +23,14 @@ export default function MapScreen() {
   const { signOut } = useAuth();
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
+  const mapRef = useRef<MapView>(null);
+
+  const focusTag = (t: Tag) => {
+    mapRef.current?.animateToRegion(
+      { latitude: t.latitude, longitude: t.longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 },
+      350,
+    );
+  };
 
   const load = useCallback(async () => {
     try {
@@ -47,7 +56,7 @@ export default function MapScreen() {
 
   return (
     <View style={styles.container}>
-      <MapView style={StyleSheet.absoluteFill} initialRegion={regionForTags(tags)}>
+      <MapView ref={mapRef} style={StyleSheet.absoluteFill} initialRegion={regionForTags(tags)}>
         {tags.map((t) => (
           <Marker
             key={t.tag_identifier}
@@ -64,6 +73,7 @@ export default function MapScreen() {
           </Marker>
         ))}
       </MapView>
+      <TagSheet tags={tags} onSelect={focusTag} />
     </View>
   );
 }
