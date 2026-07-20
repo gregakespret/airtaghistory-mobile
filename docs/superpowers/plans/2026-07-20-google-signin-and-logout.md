@@ -893,6 +893,32 @@ test("an empty code is a generic error", () => {
 test("a malformed url is a generic error", () => {
   expect(parseCallback("not a url at all")).toEqual({ error: "provider_error" });
 });
+
+test("strips a url fragment from the code", () => {
+  expect(parseCallback("airtaghistory://auth?code=abc123#foo")).toEqual({ code: "abc123" });
+});
+
+test("an error slug survives a fragment intact", () => {
+  // Must stay exactly "denied" — a later task switches on the backend's slugs.
+  expect(parseCallback("airtaghistory://auth?error=denied#foo")).toEqual({ error: "denied" });
+});
+
+test("an encoded #  stays inside the value", () => {
+  // %23 is a literal '#' in the value, not a fragment delimiter. Pins the
+  // distinction so a future "fix" cannot collapse the two.
+  expect(parseCallback("airtaghistory://auth?code=abc%23injected")).toEqual({
+    code: "abc#injected",
+  });
+});
+
+test("a repeated param takes the last value", () => {
+  // Deliberate, and different from URLSearchParams.get, which returns the first.
+  expect(parseCallback("airtaghistory://auth?code=a&code=b")).toEqual({ code: "b" });
+});
+
+test("an empty error falls through to the code", () => {
+  expect(parseCallback("airtaghistory://auth?error=&code=abc")).toEqual({ code: "abc" });
+});
 ```
 
 - [ ] **Step 2: Run the tests to verify they fail**
@@ -924,8 +950,16 @@ export function parseCallback(url: string): CallbackResult {
   const q = url.indexOf("?");
   if (q === -1) return GENERIC;
 
+  // The query ends at the first *unencoded* '#' (a URL fragment) or at the end
+  // of the string. An encoded "%23" is a literal '#' inside a value and must
+  // survive decoding untouched, so this only looks for the raw character.
+  // Without this, a fragment lands inside the value and an error slug stops
+  // matching the backend's exact `denied`/`provider_error`/`bad_state`.
+  const hash = url.indexOf("#", q + 1);
+  const query = hash === -1 ? url.slice(q + 1) : url.slice(q + 1, hash);
+
   const params = new Map<string, string>();
-  for (const pair of url.slice(q + 1).split("&")) {
+  for (const pair of query.split("&")) {
     if (!pair) continue;
     const eq = pair.indexOf("=");
     const rawKey = eq === -1 ? pair : pair.slice(0, eq);
