@@ -33,3 +33,27 @@ test("an empty code is a generic error", () => {
 test("a malformed url is a generic error", () => {
   expect(parseCallback("not a url at all")).toEqual({ error: "provider_error" });
 });
+
+test("strips a url fragment from the code", () => {
+  expect(parseCallback("airtaghistory://auth?code=abc123#foo")).toEqual({ code: "abc123" });
+});
+
+test("strips a url fragment from the error slug", () => {
+  expect(parseCallback("airtaghistory://auth?error=denied#foo")).toEqual({ error: "denied" });
+});
+
+test("an encoded # stays in the value (not treated as a fragment)", () => {
+  expect(parseCallback("airtaghistory://auth?code=abc%23injected")).toEqual({
+    code: "abc#injected",
+  });
+});
+
+// Documented behaviour, not an accident: a repeated param takes the last value.
+// This differs from URLSearchParams.get, which returns the first.
+test("a repeated param takes the last value", () => {
+  expect(parseCallback("airtaghistory://auth?code=a&code=b")).toEqual({ code: "b" });
+});
+
+test("an empty error falls through to code", () => {
+  expect(parseCallback("airtaghistory://auth?error=&code=abc")).toEqual({ code: "abc" });
+});

@@ -14,8 +14,14 @@ export function parseCallback(url: string): CallbackResult {
   const q = url.indexOf("?");
   if (q === -1) return GENERIC;
 
+  // The query ends at the first *unencoded* '#' (a URL fragment) or at the end
+  // of the string. An encoded "%23" is a literal '#' inside a value and must
+  // survive decoding untouched, so this only looks for the raw character.
+  const hash = url.indexOf("#", q + 1);
+  const query = hash === -1 ? url.slice(q + 1) : url.slice(q + 1, hash);
+
   const params = new Map<string, string>();
-  for (const pair of url.slice(q + 1).split("&")) {
+  for (const pair of query.split("&")) {
     if (!pair) continue;
     const eq = pair.indexOf("=");
     const rawKey = eq === -1 ? pair : pair.slice(0, eq);
