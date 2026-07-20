@@ -2,6 +2,7 @@
 
 **Date:** 2026-07-19
 **Repos:** `airtaghistory-mobile` (this repo) and `airtag-tracker` (backend)
+**Artifact:** https://claude.ai/code/artifact/80817fc0-5e4a-4651-906a-348b09c7b21f?via=auto_preview
 
 ## Goal
 
