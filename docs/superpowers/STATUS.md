@@ -1,22 +1,43 @@
 # Status — Google sign-in and log out
 
-**Updated:** 2026-07-20
-**Branch (this repo):** `feat/google-signin-logout`
-**Branch (backend):** `airtag-tracker` is on `feat/api-token-auth`
+**Updated:** 2026-07-21
+**Branch (this repo):** `feat/google-signin-logout` — PR
+[airtaghistory-mobile#1](https://github.com/gregakespret/airtaghistory-mobile/pull/1)
+**Branch (backend):** `airtag-tracker` on `feat/native-auth-endpoints` — PR
+[airtag-tracker#59](https://github.com/gregakespret/airtag-tracker/pull/59)
+
+> The backend work originally sat on `feat/api-token-auth`, but that branch's PR
+> (#55) had already merged, leaving the six auth commits stranded past the merge
+> point. They were cherry-picked onto a fresh branch off `master`; #59 is the one
+> to review and merge.
 
 ## Where we are
 
-Design is **approved**. No implementation has started — not a single line of
-feature code exists yet in either repo.
+All code for both halves is **written, committed, and pushed**. Every automated
+check passes. What is left is the acceptance gate: the backend has to be
+deployed before the app's browser round-trip can be walked on a simulator.
 
 | Stage | State |
 |---|---|
 | Brainstorm / design | Done, approved |
 | Spec written and committed | Done — `019f129` |
-| Implementation plan | **Not written** — this is the next step |
-| Backend implementation | Not started |
-| App implementation | Not started |
-| Verification on simulator | Not started |
+| Implementation plan | Done — `plans/2026-07-20-google-signin-and-logout.md` |
+| Backend implementation (Tasks 1–5) | Done — in PR #59 |
+| Backend deploy (Task 6) | **Not done — blocks manual verification** |
+| App implementation (Tasks 7–12) | Done — in PR #1 |
+| Automated checks (Task 13 step 1) | Done — backend 270 passed; app `tsc` clean, 16 Jest tests pass |
+| Manual verification on simulator (Task 13 steps 2–4) | **Not done — blocked on the deploy** |
+
+## What has to happen next
+
+1. Review and merge **PR #59**, then deploy the backend and confirm the
+   migration ran and the new endpoints answer (plan Task 6).
+2. Walk the six simulator scenarios in plan Task 13 step 3, and confirm
+   sign-out really revoked the session server-side (step 4).
+3. Merge **PR #1** once those pass.
+
+`expo-web-browser` is a native module, so the simulator run needs a dev-client
+rebuild (`npx expo run:ios`), not just a Metro reload.
 
 ## The design in one paragraph
 
@@ -52,14 +73,16 @@ Full detail, including rejected alternatives and their reasoning:
 - The flow type (native vs web) must be read from the **`oauth_state` cookie we
   set**, never from the `state` echoed back in the query string — the echoed
   value is attacker-controllable, and on a CSRF failure the two don't match.
-- `auth.tsx` currently fakes the restored user as `{ id: 0, email: "" }` and
-  probes token validity by calling `getTags()`. The new `GET /api/auth/me`
-  replaces both; delete the placeholder and the probe.
+- `auth.tsx` used to fake the restored user as `{ id: 0, email: "" }` and probe
+  token validity by calling `getTags()`. Both are gone — `GET /api/auth/me` now
+  validates the token and returns the real user.
 - `AGENTS.md` requires checking API signatures against
   <https://docs.expo.dev/versions/v57.0.0/> before writing Expo code, not
   writing them from memory.
-- `expo-web-browser` and `expo-linking` are native modules, so adding them needs
-  an `expo run:ios` rebuild.
+- Only `expo-web-browser` was installed, not `expo-linking`:
+  `openAuthSessionAsync` hands back the redirect URL directly, so `parseCallback`
+  stayed a dependency-free pure function (and its tests need no native mocking).
+  It is still a native module, so it needs an `expo run:ios` rebuild.
 - `app.json` already declares `"scheme": "airtaghistory"` — no config change
   needed for the deep link.
 - Only one user account exists (the developer's), so there are no existing
@@ -67,9 +90,9 @@ Full detail, including rejected alternatives and their reasoning:
 
 ## Next step
 
-Write the implementation plan with the `superpowers:writing-plans` skill, then
-execute it with `superpowers:executing-plans`. The plan file is what tracks
-progress across sessions — this document only tracks the phase.
+Deploy the backend (plan Task 6), then run plan Task 13 steps 2–4. The plan
+file's checkboxes are what track progress across sessions — this document only
+tracks the phase.
 
 ## Reference
 

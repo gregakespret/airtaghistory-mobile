@@ -72,7 +72,7 @@ The spec's dependency list names both `expo-web-browser` and `expo-linking`. Thi
   - `auth.start_auth_code(user_id: int) -> str`
   - `auth.consume_auth_code(code: str) -> int | None`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `backend/test_auth.py`:
 
@@ -137,7 +137,7 @@ def test_purge_expired_auth_codes_removes_only_expired(fresh_db):
 
 Sanity-check the stampede test before trusting it: a concurrency test that passes against a racy implementation is worthless. Once Step 3 is in, temporarily revert `consume_auth_code` to a `session.get(...)` / `session.delete(...)` pair and confirm this test FAILS, then restore the atomic version.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 cd ~/dev/airtag-tracker/backend && uv run pytest test_auth.py -k auth_code -v
@@ -145,7 +145,7 @@ cd ~/dev/airtag-tracker/backend && uv run pytest test_auth.py -k auth_code -v
 
 Expected: FAIL — `AttributeError: module 'auth' has no attribute 'start_auth_code'`.
 
-- [ ] **Step 3: Add the model and helpers to `db.py`**
+- [x] **Step 3: Add the model and helpers to `db.py`**
 
 After the `PasswordResetRow` class, add:
 
@@ -208,7 +208,7 @@ def purge_expired_auth_codes() -> int:
         return result.rowcount or 0
 ```
 
-- [ ] **Step 4: Add the minting layer to `auth.py`**
+- [x] **Step 4: Add the minting layer to `auth.py`**
 
 Next to `SESSION_TTL`, add:
 
@@ -235,7 +235,7 @@ def consume_auth_code(code: str) -> int | None:
     return db.consume_auth_code(code)
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 ```bash
 cd ~/dev/airtag-tracker/backend && uv run pytest test_auth.py -k auth_code -v
@@ -243,7 +243,7 @@ cd ~/dev/airtag-tracker/backend && uv run pytest test_auth.py -k auth_code -v
 
 Expected: 5 passed.
 
-- [ ] **Step 6: Generate the migration**
+- [x] **Step 6: Generate the migration**
 
 ```bash
 cd ~/dev/airtag-tracker/backend && python -m alembic revision -m "auth_codes table"
@@ -270,7 +270,7 @@ def downgrade() -> None:
     op.drop_table("auth_codes")
 ```
 
-- [ ] **Step 7: Verify the migration applies to a scratch database**
+- [x] **Step 7: Verify the migration applies to a scratch database**
 
 ```bash
 cd ~/dev/airtag-tracker/backend && \
@@ -280,7 +280,7 @@ cd ~/dev/airtag-tracker/backend && \
 
 Expected: alembic logs each revision and prints `MIGRATION_OK`.
 
-- [ ] **Step 8: Run the full backend suite**
+- [x] **Step 8: Run the full backend suite**
 
 ```bash
 cd ~/dev/airtag-tracker/backend && uv run pytest -q
@@ -288,7 +288,7 @@ cd ~/dev/airtag-tracker/backend && uv run pytest -q
 
 Expected: all pass. **`test_startup_migrations.py` will fail with `table auth_codes already exists` until you update it.** Its `test_existing_db_behind_head_gets_upgraded` fakes an old schema by calling `Base.metadata.create_all()` and then dropping everything added since that revision; `AuthCodeRow` is now part of `Base`, so it needs a `DROP TABLE auth_codes` alongside the existing `password_resets` drop, plus the matching `assert _has_table("auth_codes")` after the upgrade. That fixture is fragile by design for every new model — this is keeping it in sync, not papering over a migration defect.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 cd ~/dev/airtag-tracker && git add backend/db.py backend/auth.py backend/test_auth.py \
@@ -311,7 +311,7 @@ cd ~/dev/airtag-tracker && git add backend/db.py backend/auth.py backend/test_au
   - `db.get_oauth_providers_for_user(user_id: int) -> list[str]` — sorted provider names
   - `GET /api/auth/me` → `{"id": int, "email": str, "timezone": str | None, "providers": list[str]}`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `backend/test_auth.py`:
 
@@ -347,7 +347,7 @@ def test_api_auth_me_rejects_anonymous(client):
     assert r.status_code == 303  # AuthRedirect -> /login, as every API route does
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 cd ~/dev/airtag-tracker/backend && uv run pytest test_auth.py -k api_auth_me -v
@@ -355,7 +355,7 @@ cd ~/dev/airtag-tracker/backend && uv run pytest test_auth.py -k api_auth_me -v
 
 Expected: FAIL — 404 on `/api/auth/me`.
 
-- [ ] **Step 3: Add the db helper**
+- [x] **Step 3: Add the db helper**
 
 In `db.py`, after `link_oauth_account`:
 
@@ -369,7 +369,7 @@ def get_oauth_providers_for_user(user_id: int) -> list[str]:
         return sorted(rows)
 ```
 
-- [ ] **Step 4: Add the route**
+- [x] **Step 4: Add the route**
 
 In `main.py`, immediately after `api_auth_token`:
 
@@ -387,7 +387,7 @@ def api_auth_me(user: dict = Depends(require_user)):
     }
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 ```bash
 cd ~/dev/airtag-tracker/backend && uv run pytest test_auth.py -k api_auth_me -v
@@ -395,7 +395,7 @@ cd ~/dev/airtag-tracker/backend && uv run pytest test_auth.py -k api_auth_me -v
 
 Expected: 3 passed.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 cd ~/dev/airtag-tracker && git add backend/db.py backend/main.py backend/test_auth.py && \
@@ -414,7 +414,7 @@ cd ~/dev/airtag-tracker && git add backend/db.py backend/main.py backend/test_au
 - Consumes: `auth.start_auth_code`, `auth.consume_auth_code` (Task 1).
 - Produces: `POST /api/auth/exchange` with body `{"code": str}` → `200 {"token": str, "user": {"id", "email", "timezone"}}`, or `401` for unknown/expired/used codes. Same response shape as `POST /api/auth/token`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `backend/test_auth.py`:
 
@@ -452,7 +452,7 @@ def test_exchange_rejects_an_unknown_code(client):
     assert r.status_code == 401
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 cd ~/dev/airtag-tracker/backend && uv run pytest test_auth.py -k exchange -v
@@ -460,7 +460,7 @@ cd ~/dev/airtag-tracker/backend && uv run pytest test_auth.py -k exchange -v
 
 Expected: FAIL — 404 on `/api/auth/exchange`.
 
-- [ ] **Step 3: Add the route**
+- [x] **Step 3: Add the route**
 
 In `main.py`, after `api_auth_me`:
 
@@ -488,7 +488,7 @@ def api_auth_exchange(body: _ExchangeRequest):
     }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 cd ~/dev/airtag-tracker/backend && uv run pytest test_auth.py -k exchange -v
@@ -496,7 +496,7 @@ cd ~/dev/airtag-tracker/backend && uv run pytest test_auth.py -k exchange -v
 
 Expected: 4 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd ~/dev/airtag-tracker && git add backend/main.py backend/test_auth.py && \
@@ -517,7 +517,7 @@ cd ~/dev/airtag-tracker && git add backend/main.py backend/test_auth.py && \
 
 Note: this route deliberately does **not** use `require_user`. Logging out of an already-dead session is not an error, and the app calls it best-effort.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `backend/test_auth.py`:
 
@@ -542,7 +542,7 @@ def test_api_logout_with_a_dead_token_is_still_204(client):
     assert r.status_code == 204
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 cd ~/dev/airtag-tracker/backend && uv run pytest test_auth.py -k api_logout -v
@@ -550,7 +550,7 @@ cd ~/dev/airtag-tracker/backend && uv run pytest test_auth.py -k api_logout -v
 
 Expected: FAIL — 404 on `/api/auth/logout`.
 
-- [ ] **Step 3: Make the bearer-token helper public**
+- [x] **Step 3: Make the bearer-token helper public**
 
 In `auth.py`, rename `_bearer_token` to `bearer_token` (definition and its docstring stay as-is) and update its single caller inside `get_current_user`:
 
@@ -566,7 +566,7 @@ cd ~/dev/airtag-tracker/backend && grep -rn "_bearer_token" . --include=*.py
 
 Expected: no output.
 
-- [ ] **Step 4: Add the route**
+- [x] **Step 4: Add the route**
 
 In `main.py`, after `api_auth_exchange`:
 
@@ -579,7 +579,7 @@ def api_auth_logout(request: Request):
     return Response(status_code=204)
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 ```bash
 cd ~/dev/airtag-tracker/backend && uv run pytest test_auth.py -k api_logout -v
@@ -587,7 +587,7 @@ cd ~/dev/airtag-tracker/backend && uv run pytest test_auth.py -k api_logout -v
 
 Expected: 3 passed.
 
-- [ ] **Step 6: Run the whole backend suite (the rename touched a shared code path)**
+- [x] **Step 6: Run the whole backend suite (the rename touched a shared code path)**
 
 ```bash
 cd ~/dev/airtag-tracker/backend && uv run pytest -q
@@ -595,7 +595,7 @@ cd ~/dev/airtag-tracker/backend && uv run pytest -q
 
 Expected: all pass.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 cd ~/dev/airtag-tracker && git add backend/auth.py backend/main.py backend/test_auth.py && \
@@ -618,7 +618,7 @@ cd ~/dev/airtag-tracker && git add backend/auth.py backend/main.py backend/test_
   - native callback failure → `303` to `airtaghistory://auth?error=<denied|provider_error|bad_state>`
   - web flow (no `native=1`) → completely unchanged
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `backend/test_oauth.py` (it already imports `parse_qs, urlparse`, `db`, `main`, `oauth`):
 
@@ -693,7 +693,7 @@ def test_forged_native_state_cannot_redirect_a_web_flow_to_the_app(client, provi
     assert r.headers["location"] == "/login"
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 cd ~/dev/airtag-tracker/backend && uv run pytest test_oauth.py -k native -v
@@ -701,7 +701,7 @@ cd ~/dev/airtag-tracker/backend && uv run pytest test_oauth.py -k native -v
 
 Expected: FAIL — the `oauth_state` cookie has no `native:` prefix.
 
-- [ ] **Step 3: Rewrite the social-login section of `main.py`**
+- [x] **Step 3: Rewrite the social-login section of `main.py`**
 
 Replace the block from `_OAUTH_STATE_COOKIE = "oauth_state"` through the end of `oauth_callback` with:
 
@@ -790,7 +790,7 @@ from urllib.parse import urlencode
 
 (place it with the other stdlib imports, after `from datetime import UTC, datetime, timedelta`)
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 cd ~/dev/airtag-tracker/backend && uv run pytest test_oauth.py -v
@@ -798,7 +798,7 @@ cd ~/dev/airtag-tracker/backend && uv run pytest test_oauth.py -v
 
 Expected: all pass — the new native tests *and* the pre-existing web-flow tests (`test_oauth_callback_creates_session`, `test_oauth_callback_rejects_bad_state`, `test_unknown_provider_redirects`, `test_oauth_callback_provider_failure_redirects_to_login`).
 
-- [ ] **Step 5: Run the whole backend suite**
+- [x] **Step 5: Run the whole backend suite**
 
 ```bash
 cd ~/dev/airtag-tracker/backend && uv run pytest -q
@@ -806,7 +806,7 @@ cd ~/dev/airtag-tracker/backend && uv run pytest -q
 
 Expected: all pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 cd ~/dev/airtag-tracker && git add backend/main.py backend/test_oauth.py && \
@@ -819,7 +819,7 @@ cd ~/dev/airtag-tracker && git add backend/main.py backend/test_oauth.py && \
 
 The app talks to `https://airtaghistory.com` (`src/config.ts`), so every app task below needs these endpoints live. This task is a gate, not code.
 
-- [ ] **Step 1: Push the backend branch**
+- [x] **Step 1: Push the backend branch**
 
 ```bash
 cd ~/dev/airtag-tracker && git push -u origin feat/api-token-auth
@@ -853,7 +853,7 @@ Expected: `204`, then `401`, then a `https://accounts.google.com/o/oauth2/v2/aut
 - Consumes: nothing. Deliberately dependency-free so it runs under plain Jest.
 - Produces: `export type CallbackResult = { code: string } | { error: string };` and `export function parseCallback(url: string): CallbackResult`. An unparseable URL, or one with neither param, yields `{ error: "provider_error" }` — the app's generic "Something went wrong." bucket.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/deeplink.test.ts`:
 
@@ -921,7 +921,7 @@ test("an empty error falls through to the code", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 cd ~/dev/airtaghistory-mobile && npx jest src/deeplink.test.ts
@@ -929,7 +929,7 @@ cd ~/dev/airtaghistory-mobile && npx jest src/deeplink.test.ts
 
 Expected: FAIL — `Cannot find module './deeplink'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `src/deeplink.ts`:
 
@@ -980,7 +980,7 @@ export function parseCallback(url: string): CallbackResult {
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 cd ~/dev/airtaghistory-mobile && npx jest src/deeplink.test.ts
@@ -988,7 +988,7 @@ cd ~/dev/airtaghistory-mobile && npx jest src/deeplink.test.ts
 
 Expected: 8 passed.
 
-- [ ] **Step 5: Type-check**
+- [x] **Step 5: Type-check**
 
 ```bash
 cd ~/dev/airtaghistory-mobile && npx tsc --noEmit
@@ -996,7 +996,7 @@ cd ~/dev/airtaghistory-mobile && npx tsc --noEmit
 
 Expected: no output.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 cd ~/dev/airtaghistory-mobile && git add src/deeplink.ts src/deeplink.test.ts && \
@@ -1017,7 +1017,7 @@ cd ~/dev/airtaghistory-mobile && git add src/deeplink.ts src/deeplink.test.ts &&
   - `api.logout(): Promise<void>`
   - `api.me(): Promise<Me>` where `export type Me = User & { providers: string[] }`
 
-- [ ] **Step 1: Handle 204 in `request`**
+- [x] **Step 1: Handle 204 in `request`**
 
 `POST /api/auth/logout` returns 204 with no body, and the current `request` unconditionally calls `res.json()`. In `src/api.ts`, replace the tail of `request`:
 
@@ -1031,7 +1031,7 @@ cd ~/dev/airtaghistory-mobile && git add src/deeplink.ts src/deeplink.test.ts &&
   return (await res.json()) as T;
 ```
 
-- [ ] **Step 2: Add the `Me` type and the three methods**
+- [x] **Step 2: Add the `Me` type and the three methods**
 
 Under the existing `User` type declaration, add:
 
@@ -1056,7 +1056,7 @@ Inside the `api` object, after `login`:
   },
 ```
 
-- [ ] **Step 3: Type-check and run the suite**
+- [x] **Step 3: Type-check and run the suite**
 
 ```bash
 cd ~/dev/airtaghistory-mobile && npx tsc --noEmit && npm test
@@ -1064,7 +1064,7 @@ cd ~/dev/airtaghistory-mobile && npx tsc --noEmit && npm test
 
 Expected: no tsc output; all Jest tests pass.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 cd ~/dev/airtaghistory-mobile && git add src/api.ts && \
@@ -1107,7 +1107,7 @@ WebBrowser.openAuthSessionAsync(
 //                 | { type: 'dismiss' } | { type: 'opened' }  (Android only)
 ```
 
-- [ ] **Step 1: Install the dependency**
+- [x] **Step 1: Install the dependency**
 
 ```bash
 cd ~/dev/airtaghistory-mobile && npx expo install expo-web-browser
@@ -1115,7 +1115,7 @@ cd ~/dev/airtaghistory-mobile && npx expo install expo-web-browser
 
 Expected: `package.json` gains `expo-web-browser` at its SDK 57 version.
 
-- [ ] **Step 2: Rewrite `src/auth.tsx`**
+- [x] **Step 2: Rewrite `src/auth.tsx`**
 
 `expo-web-browser` is a native module, so the dev client must be rebuilt (Step 3) before this runs on a device. Replace the whole file with:
 
@@ -1234,7 +1234,7 @@ export function useAuth(): AuthState {
 
 Note: `signOut` is now `Promise<void>`. `MapScreen.tsx:59` calls it inside a `catch` without awaiting — that still compiles and still works (the promise is simply not awaited), and Task 12 leaves that call site alone.
 
-- [ ] **Step 3: Rebuild the dev client**
+- [x] **Step 3: Rebuild the dev client**
 
 ```bash
 cd ~/dev/airtaghistory-mobile && npx expo run:ios
@@ -1242,7 +1242,7 @@ cd ~/dev/airtaghistory-mobile && npx expo run:ios
 
 Expected: the app builds and launches in the simulator. A native module was added, so a plain `expo start` against the old dev client would fail at `openAuthSessionAsync`.
 
-- [ ] **Step 4: Type-check and run the suite**
+- [x] **Step 4: Type-check and run the suite**
 
 ```bash
 cd ~/dev/airtaghistory-mobile && npx tsc --noEmit && npm test
@@ -1250,7 +1250,7 @@ cd ~/dev/airtaghistory-mobile && npx tsc --noEmit && npm test
 
 Expected: no tsc output; all Jest tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd ~/dev/airtaghistory-mobile && git add package.json package-lock.json src/auth.tsx ios && \
@@ -1268,7 +1268,7 @@ cd ~/dev/airtaghistory-mobile && git add package.json package-lock.json src/auth
 - Consumes: `signInWithGoogle` from `useAuth()` (Task 9).
 - Produces: no exported symbols.
 
-- [ ] **Step 1: Wire the handler**
+- [x] **Step 1: Wire the handler**
 
 In `src/screens/LoginScreen.tsx`, change the `useAuth()` destructure and add a second handler:
 
@@ -1291,7 +1291,7 @@ In `src/screens/LoginScreen.tsx`, change the `useAuth()` destructure and add a s
   };
 ```
 
-- [ ] **Step 2: Add the button and divider above the form**
+- [x] **Step 2: Add the button and divider above the form**
 
 Insert between `<Text style={styles.title}>` and the first `<TextInput>`:
 
@@ -1312,7 +1312,7 @@ Insert between `<Text style={styles.title}>` and the first `<TextInput>`:
       </View>
 ```
 
-- [ ] **Step 3: Add the styles**
+- [x] **Step 3: Add the styles**
 
 Add to the `StyleSheet.create` object:
 
@@ -1327,7 +1327,7 @@ Add to the `StyleSheet.create` object:
   dividerText: { color: "#888", fontSize: 13 },
 ```
 
-- [ ] **Step 4: Type-check and run the suite**
+- [x] **Step 4: Type-check and run the suite**
 
 ```bash
 cd ~/dev/airtaghistory-mobile && npx tsc --noEmit && npm test
@@ -1335,7 +1335,7 @@ cd ~/dev/airtaghistory-mobile && npx tsc --noEmit && npm test
 
 Expected: no tsc output; all Jest tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd ~/dev/airtaghistory-mobile && git add src/screens/LoginScreen.tsx && \
@@ -1364,7 +1364,7 @@ export default function AccountSheet(props: {
 
 `onSignOut` is fired by the row; the parent decides what to do (Task 12 closes the sheet and calls `signOut`). No confirmation dialog — opening a sheet and tapping a red row is already deliberate.
 
-- [ ] **Step 1: Write the component**
+- [x] **Step 1: Write the component**
 
 Create `src/components/AccountSheet.tsx`:
 
@@ -1463,7 +1463,7 @@ const styles = StyleSheet.create({
 });
 ```
 
-- [ ] **Step 2: Type-check and run the suite**
+- [x] **Step 2: Type-check and run the suite**
 
 ```bash
 cd ~/dev/airtaghistory-mobile && npx tsc --noEmit && npm test
@@ -1471,7 +1471,7 @@ cd ~/dev/airtaghistory-mobile && npx tsc --noEmit && npm test
 
 Expected: no tsc output; all Jest tests pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 cd ~/dev/airtaghistory-mobile && git add src/components/AccountSheet.tsx && \
@@ -1491,7 +1491,7 @@ cd ~/dev/airtaghistory-mobile && git add src/components/AccountSheet.tsx && \
 
 The avatar sits top-**right**. `TimeSlider`'s clock toggle is top-left at `top: TOP_INSET, left: 16` with `TOP_INSET = 54` on iOS, so the avatar mirrors those numbers and does not collide with it.
 
-- [ ] **Step 1: Add the imports and the top inset**
+- [x] **Step 1: Add the imports and the top inset**
 
 In `src/screens/MapScreen.tsx`, extend the React Native import and add the others:
 
@@ -1508,7 +1508,7 @@ Below the `PLAY_INTERVAL_MS` constant, add:
 const TOP_INSET = Platform.OS === "ios" ? 54 : 24;
 ```
 
-- [ ] **Step 2: Add the state and the auth values**
+- [x] **Step 2: Add the state and the auth values**
 
 Change the `useAuth()` destructure and add one piece of state:
 
@@ -1520,7 +1520,7 @@ Change the `useAuth()` destructure and add one piece of state:
   const [accountOpen, setAccountOpen] = useState(false);
 ```
 
-- [ ] **Step 3: Render the avatar and the sheet**
+- [x] **Step 3: Render the avatar and the sheet**
 
 Inside the returned `<View style={styles.container}>`, after `<TagSheet ... />`, add:
 
@@ -1549,7 +1549,7 @@ Inside the returned `<View style={styles.container}>`, after `<TagSheet ... />`,
       )}
 ```
 
-- [ ] **Step 4: Add the styles**
+- [x] **Step 4: Add the styles**
 
 Add to `StyleSheet.create`:
 
@@ -1565,7 +1565,7 @@ Add to `StyleSheet.create`:
   avatarText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 ```
 
-- [ ] **Step 5: Type-check and run the suite**
+- [x] **Step 5: Type-check and run the suite**
 
 ```bash
 cd ~/dev/airtaghistory-mobile && npx tsc --noEmit && npm test
@@ -1573,7 +1573,7 @@ cd ~/dev/airtaghistory-mobile && npx tsc --noEmit && npm test
 
 Expected: no tsc output; all Jest tests pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 cd ~/dev/airtaghistory-mobile && git add src/screens/MapScreen.tsx && \
@@ -1589,7 +1589,7 @@ The browser round-trip cannot be meaningfully unit-tested. This task is the acce
 **Files:**
 - Modify: `docs/superpowers/STATUS.md`
 
-- [ ] **Step 1: Run every automated check in both repos**
+- [x] **Step 1: Run every automated check in both repos**
 
 ```bash
 cd ~/dev/airtag-tracker/backend && uv run pytest -q
