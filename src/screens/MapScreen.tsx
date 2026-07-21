@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, Pressable, Platform } from "react-native";
 import MapView, { Marker, Callout, Polyline, Region } from "react-native-maps";
 import { api, Tag, Snapshot, ApiError } from "../api";
 import { useAuth } from "../auth";
+import AccountSheet, { monogram } from "../components/AccountSheet";
 import TagSheet from "../components/TagSheet";
 import TimeSlider from "../components/TimeSlider";
 import { buildTimeline, positionsAt, trailFor } from "../timetravel";
@@ -26,6 +27,10 @@ type Pin = { id: string; name: string; lat: number; lon: number; ago: string; lo
 // How long each historical snapshot is shown during playback.
 const PLAY_INTERVAL_MS = 600;
 
+// No safe-area-context in this project; mirrors TimeSlider's approximation so
+// the avatar and the clock toggle sit on the same line.
+const TOP_INSET = Platform.OS === "ios" ? 54 : 24;
+
 const FRESH_COLORS: Record<string, string> = {
   fresh: "#34c759",
   stale: "#ff9500",
@@ -33,7 +38,8 @@ const FRESH_COLORS: Record<string, string> = {
 };
 
 export default function MapScreen() {
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
+  const [accountOpen, setAccountOpen] = useState(false);
   const [tags, setTags] = useState<Tag[]>([]);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -196,6 +202,28 @@ export default function MapScreen() {
         onTogglePlay={() => setPlaying((p) => !p)}
       />
       <TagSheet tags={tags} onSelect={focusTag} />
+      {user && (
+        <>
+          <Pressable
+            style={styles.avatar}
+            onPress={() => setAccountOpen(true)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Account"
+          >
+            <Text style={styles.avatarText}>{monogram(user.email)}</Text>
+          </Pressable>
+          <AccountSheet
+            user={user}
+            visible={accountOpen}
+            onClose={() => setAccountOpen(false)}
+            onSignOut={() => {
+              setAccountOpen(false);
+              signOut();
+            }}
+          />
+        </>
+      )}
     </View>
   );
 }
@@ -214,4 +242,13 @@ const styles = StyleSheet.create({
     width: 15, height: 15, borderRadius: 8, borderWidth: 2.5, borderColor: "#fff",
     shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 3,
   },
+  avatar: {
+    position: "absolute", top: TOP_INSET, right: 16, zIndex: 10,
+    width: 38, height: 38, borderRadius: 19, backgroundColor: "#007aff",
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 2, borderColor: "#fff",
+    shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 }, elevation: 3,
+  },
+  avatarText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 });
