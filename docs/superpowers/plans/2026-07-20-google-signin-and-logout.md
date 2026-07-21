@@ -1598,7 +1598,7 @@ cd ~/dev/airtaghistory-mobile && npx tsc --noEmit && npm test
 
 Expected: all pass, no tsc output. Paste the actual output into the task notes — do not claim green without it.
 
-- [ ] **Step 2: Launch on the simulator**
+- [x] **Step 2: Launch on the simulator**
 
 ```bash
 cd ~/dev/airtaghistory-mobile && npx expo run:ios

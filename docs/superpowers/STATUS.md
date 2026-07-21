@@ -26,7 +26,8 @@ deployed before the app's browser round-trip can be walked on a simulator.
 | Backend deploy (Task 6) | **Not done — blocks manual verification** |
 | App implementation (Tasks 7–12) | Done — in PR #1 |
 | Automated checks (Task 13 step 1) | Done — backend 270 passed; app `tsc` clean, 16 Jest tests pass |
-| Manual verification on simulator (Task 13 steps 2–4) | **Not done — blocked on the deploy** |
+| Dev-client rebuild (Task 13 step 2) | Done — `expo run:ios` builds, installs and launches on iPhone 17 Pro; bundle clean at 759 modules |
+| Six manual scenarios (Task 13 steps 3–4) | **Not done — blocked on the deploy** |
 
 ## What has to happen next
 
