@@ -4,7 +4,7 @@ import { useAuth } from "../auth";
 import { ApiError } from "../api";
 
 export default function LoginScreen() {
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -22,9 +22,36 @@ export default function LoginScreen() {
     }
   };
 
+  const google = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      await signInWithGoogle();
+    } catch (e) {
+      // signInWithGoogle throws Errors whose message is already display copy.
+      setError(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>AirTag History</Text>
+      <Pressable
+        style={styles.googleButton}
+        onPress={google}
+        disabled={busy}
+        accessibilityRole="button"
+        accessibilityLabel="Continue with Google"
+      >
+        <Text style={styles.googleButtonText}>Continue with Google</Text>
+      </Pressable>
+      <View style={styles.dividerRow}>
+        <View style={styles.dividerLine} />
+        <Text style={styles.dividerText}>or</Text>
+        <View style={styles.dividerLine} />
+      </View>
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -55,4 +82,12 @@ const styles = StyleSheet.create({
   button: { backgroundColor: "#007aff", borderRadius: 12, padding: 16, alignItems: "center", marginTop: 8 },
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   error: { color: "#d00", textAlign: "center" },
+  googleButton: {
+    backgroundColor: "#fff", borderRadius: 12, padding: 16, alignItems: "center",
+    borderWidth: 1, borderColor: "#ddd",
+  },
+  googleButtonText: { color: "#1a1a1a", fontSize: 16, fontWeight: "600" },
+  dividerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 4 },
+  dividerLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: "#ddd" },
+  dividerText: { color: "#888", fontSize: 13 },
 });
